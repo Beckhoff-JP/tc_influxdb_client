@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="DataTag" Id="{8368d422-7315-40e1-bc65-829e46327944}">
+    <Declaration><![CDATA[(*
+:作成日: 2023/3/1
+:開発者: 市橋 卓
+
+TF6420 database serverを用いた、influxDBのMeasurementにデータを書き込む際のタグ部分の構造体です。タグを定義する構造体は :ref:`figure_data_structure` に示す通り、フィールドを定義する構造体により継承されます。 
+
+.. figure:: ../../LibraryBundle/data_struct.svg
+    :width: 250px
+    :align: center
+    :name: figure_data_structure
+
+    influxDBのデータタグの格納用構造体定義
+	
+*)
+TYPE DataTag:
+STRUCT
+	{attribute 'TagName' := 'machine_id'}
+    machine_id : STRING(255); // 設備名
+    {attribute 'TagName' := 'data_type_id'}
+    job_id : STRING(255); // 発生イベント種別
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

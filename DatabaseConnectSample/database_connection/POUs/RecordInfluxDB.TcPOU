@@ -1,0 +1,164 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="RecordInfluxDB" Id="{8024213b-1b7f-44f6-b63f-23d9e46d68db}" SpecialFunc="None">
+    <Declaration><![CDATA[(*
+:Author: 
+
+	Takashi Ichihashi Beckhoff Automation co. ltd.
+	
+:Date:
+
+	2023-03-09
+	
+Overview
+==================
+
+
+
+Infosys Link:  `https://infosys.beckhoff.com/content/1033/tf6420_tc3_database_server/8117583755.html?id=5199556541044360835 <https://infosys.beckhoff.com/content/1033/tf6420_tc3_database_server/8117583755.html?id=5199556541044360835>`
+
+Quick start
+======================
+
+As first you have to deine data model that the sampling data to insert to influxDB measurement.  The data models are structured by parent and child that is corresponding data tags and fields on influxDB.
+
+.. code:: DataTag structure
+
+	TYPE DataTag:
+	STRUCT
+		{attribute 'TagName' := 'machine_id'}
+		machine_id : STRING(255); // 設備名
+		{attribute 'TagName' := 'data_type_id'}
+		data_type_id : STRING(255); // 発生イベント種別
+	END_STRUCT
+	END_TYPE	
+
+	
+.. code:: DataField structure
+
+	TYPE PerformanceData EXTENDS DataTag:
+	STRUCT
+		{attribute 'FieldName' := 'plc_task_time'}
+		task_time: UDINT;
+		{attribute 'FieldName' := 'cpu_usage'}
+		cpu_usage: UDINT;
+		{attribute 'FieldName' := 'latency'}
+		latency: UDINT;
+		{attribute 'FieldName' := 'max_latency'}
+		max_latency: UDINT;
+		{attribute 'FieldName' := 'exceed_counter'}
+		exceed_counter: UDINT;
+		{attribute 'FieldName' := 'ec_lost_frames'}
+		ec_lost_frames: UDINT;
+		{attribute 'FieldName' := 'ec_frame_rate'}
+		ec_frame_rate: LREAL;
+		{attribute 'FieldName' := 'ec_lost_q_frame'}
+		ec_lost_q_frames: UDINT;
+		{attribute 'FieldName' := 'ec_q_frame_rate'}
+		ec_q_frame_rate: LREAL;
+		{attribute 'FieldName' := 'executing'}
+		executing: BOOL;
+		{attribute 'FieldName' := 'DB_queue_count'}
+		db_insert_queue_count: UDINT;
+		{attribute 'FieldName' := 'DB_buffer_current_index'}
+		current_index: UDINT;
+		{attribute 'FieldName' := 'DB_buffer_next_index'}
+		next_index: UDINT;
+	
+	END_STRUCT
+	END_TYPE
+	
+*)
+
+FUNCTION_BLOCK RecordInfluxDB
+VAR_INPUT
+	nDBID						: UDINT;					// Database ID for TF6420
+END_VAR
+VAR_OUTPUT
+	bBusy			: BOOL;	// In writing database
+	bError			: BOOL; // Somthing wrong situation happend
+	TcResult		: Tc3_Database.I_TcMessage; // Response message
+    sErrorMessage	: STRING(255);	// Error message
+END_VAR
+VAR
+	QueryOption_TSDB_Insert 			: T_QueryOptionTimeSeriesDB_Insert; // defines detailed Queryparameter
+    fbNoSQLQueryBuilder_TimeSeriesDB 	: FB_NoSQLQueryBuilder_TimeSeriesDB; // defines database type specific api
+    fbNoSqlQueryEvt 					: FB_NoSQLQueryEvt(sNetID := '', tTimeout := T#15S); // functionblock to execute queries
+	
+	// Variables for queue feature
+	get_data_t 			: T_Arg;
+	get_data 			: DbInsertCommand;
+	//data_count			: UDINT;
+	buffer_counter		: UINT;
+	State				: E_DbLogState;
+END_VAR
+
+VAR_IN_OUT
+	command_queue		: CommandQueueMember;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[CASE State OF
+
+	E_DbLogState.idle:
+		
+		IF NOT fbNoSqlQueryEvt.bBusy THEN
+			State := E_DbLogState.init;
+		END_IF
+
+	E_DbLogState.init:
+	
+		IF command_queue.controller.num_of_data > 0 THEN
+			// getting data
+			get_data_t := command_queue.controller.get();
+			MEMCPY(ADR(get_data), get_data_t.pData, get_data_t.cbLen);
+			// Data set
+			fbNoSQLQueryBuilder_TimeSeriesDB.pQueryOptions := ADR(QueryOption_TSDB_Insert);
+			fbNoSQLQueryBuilder_TimeSeriesDB.cbQueryOptions := SIZEOF(QueryOption_TSDB_Insert);    
+			QueryOption_TSDB_Insert.sTableName := get_data.MeasurementName;
+			QueryOption_TSDB_Insert.sDataType := get_data.SchemaName;
+			QueryOption_TSDB_Insert.pSymbol := get_data.data_body.pData;
+			QueryOption_TSDB_Insert.cbSymbol := get_data.data_body.cbLen * get_data.chunk_size;
+			QueryOption_TSDB_Insert.nDataCount := get_data.chunk_size;
+			QueryOption_TSDB_Insert.nStartTimestamp := get_data.start_time;
+			QueryOption_TSDB_Insert.nCycleTime := get_data.cycle_time_100ns; // (in 100 ns)
+			State := E_DbLogState.writing;
+		
+		END_IF
+
+	E_DbLogState.writing:
+	
+		IF fbNoSqlQueryEvt.Execute(nDBID, fbNoSQLQueryBuilder_TimeSeriesDB) THEN
+			IF fbNoSqlQueryEvt.bError THEN
+				TcResult := fbNoSqlQueryEvt.ipTcResult;                
+				State := E_DbLogState.error;
+			ELSE
+				IF __ISVALIDREF( get_data.ref_data_buffer_counter) THEN
+					get_data.ref_data_buffer_counter := get_data.ref_data_buffer_counter - get_data.chunk_size;
+				END_IF				
+				State := E_DbLogState.idle;
+				bError := FALSE;
+			END_IF
+		END_IF
+
+	E_DbLogState.error:
+	
+		IF TcResult.RequestEventText(1033, sErrorMessage, SIZEOF(sErrorMessage)) THEN
+            TcResult.Send(F_GetSystemTime());
+            State := E_DbLogState.idle;
+            bError := TRUE;
+        END_IF
+END_CASE
+]]></ST>
+    </Implementation>
+    <LineIds Name="RecordInfluxDB">
+      <LineId Id="2293" Count="10" />
+      <LineId Id="2305" Count="23" />
+      <LineId Id="2547" Count="0" />
+      <LineId Id="2550" Count="0" />
+      <LineId Id="2549" Count="0" />
+      <LineId Id="2329" Count="12" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

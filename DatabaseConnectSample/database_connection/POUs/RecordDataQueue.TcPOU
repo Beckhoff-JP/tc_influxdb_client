@@ -1,0 +1,376 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="RecordDataQueue" Id="{8b3999e3-c2e1-4344-9092-4e707723d89a}" SpecialFunc="None">
+    <Declaration><![CDATA[(*
+	
+*)
+
+FUNCTION_BLOCK RecordDataQueue IMPLEMENTS IRecordDataQueue
+VAR
+	current_index	: UDINT; // current index value
+	sMeasurementName			: Tc2_System.T_MaxString;	// Measurement name of InfluxDB
+	sSchemaName					: Tc2_System.T_MaxString;	// Schema name as a inserted data variable type name as structure
+	nMinimumChunkSize			: UDINT := 300;				// Minimum segemnt size
+	nDataBufferMaxIndex			: UDINT := 1;				// upper bound of data buffer array.			
+	gRecordPointer				: Tc2_Utilities.T_Arg;		// Current data index
+	// Variables for queue feature
+	get_data_t 		: T_Arg;
+	get_data 		: DbInsertCommand;
+	
+	// Start point time
+	start_time		: ULINT;
+	start_data 		: T_Arg;
+
+	nCycleTime		: UDINT;					// PLC task cycle time setting(in 100ns)
+	data_size		: UDINT := 1;				// record data size
+	data_count		: UDINT := 0;		// buffer usage
+	
+	start_index		: UDINT;
+	command_q_usage	: REAL;				// data usage percentage of command queue.
+	recording		: BOOL;
+	chunk_size : UDINT;
+	bContinue		: BOOL;
+	//insert_command_buffer	: ARRAY [0..QUEUE_SIZE] OF DbInsertCommand;
+	//BufferIndex			: ARRAY [0..QUEUE_SIZE] OF T_Arg;
+	insert_command_buffer: INT;
+END_VAR
+
+VAR_OUTPUT
+	next_index 		: UDINT;
+END_VAR
+
+VAR_IN_OUT
+	command_queue 	: CommandQueueMember;	// Queue members for shared.
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Property Name="cycle_time" Id="{dd6efd39-1e93-4941-82d8-5c6febd1514f}">
+      <Declaration><![CDATA[// Explicity specify cycle time.
+PROPERTY PUBLIC cycle_time : UDINT]]></Declaration>
+      <Get Name="Get" Id="{544d71c5-8eb0-4fef-a4dc-9a6773175e9a}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{5587682c-4f41-4fa1-bbe3-a995cd57dc9a}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[nCycleTime := cycle_time;]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+    <Method Name="cyclic_record" Id="{4d6a4f57-2187-4032-b3a4-3e31e3263b61}">
+      <Declaration><![CDATA[METHOD cyclic_record : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF current_index = start_index THEN
+	start_time := F_GetSystemTime();
+	start_data := gRecordPointer;
+END_IF
+
+IF next_index <= current_index OR current_index >= nDataBufferMaxIndex THEN
+	// put_data
+	IF NOT command_queue.controller.full THEN
+		data_size := current_index - start_index + 1;
+		IF data_size > 1 THEN
+
+			// put pointer
+			IF command_queue.current_index > command_queue.buffer_size THEN
+				command_queue.current_index := 0;
+			END_IF
+			
+			// calculate each cycle time by num of data among start time and current time.
+			nCycleTime := ULINT_TO_UDINT(F_GetSystemTime() - start_time) / (data_size - 1);
+		
+			// set value of insert command
+			command_queue.buffer_body[command_queue.current_index].data_body := start_data;
+			command_queue.buffer_body[command_queue.current_index].start_time := start_time;
+			command_queue.buffer_body[command_queue.current_index].cycle_time_100ns := nCycleTime;
+			command_queue.buffer_body[command_queue.current_index].chunk_size := data_size;
+			command_queue.buffer_body[command_queue.current_index].MeasurementName := sMeasurementName;
+			command_queue.buffer_body[command_queue.current_index].SchemaName := sSchemaName;
+			command_queue.buffer_body[command_queue.current_index].ref_data_buffer_counter REF= data_count;
+			// queue in
+			IF  data_size <= (nDataBufferMaxIndex - data_count) THEN
+				command_queue.controller.put(
+					lData := F_BIGTYPE(
+						pData := ADR(command_queue.buffer_body[command_queue.current_index]), 
+						cbLen := SIZEOF(command_queue.buffer_body[command_queue.current_index])
+					)
+				);
+				data_count := data_count + command_queue.buffer_body[command_queue.current_index].chunk_size;
+				command_queue.current_index := command_queue.current_index + 1;
+				start_index := current_index + 1;
+			END_IF
+		END_IF
+	END_IF
+	// calculate next index
+	command_q_usage := UDINT_TO_REAL(command_queue.controller.num_of_data) / UDINT_TO_REAL(command_queue.buffer_size);
+	chunk_size := REAL_TO_UDINT(command_q_usage * UDINT_TO_REAL(nDataBufferMaxIndex + 1));
+	IF chunk_size < nMinimumChunkSize THEN
+		chunk_size := nMinimumChunkSize;
+	END_IF	
+	next_index := current_index + chunk_size;
+END_IF
+
+IF current_index < nDataBufferMaxIndex THEN
+	current_index := current_index + 1;
+ELSE
+	current_index := 0;
+	start_index := 0;
+	next_index := chunk_size - 1;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="data_def_structure_name" Id="{12d15a2c-bf0d-4db7-a907-7cebd338c4d6}">
+      <Declaration><![CDATA[PROPERTY PUBLIC data_def_structure_name : Tc2_System.T_MaxString]]></Declaration>
+      <Get Name="Get" Id="{ebda072e-3d15-41ca-8ab8-cbbe755d7e35}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{374779eb-84af-449b-b1d1-d49d94a7b136}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[sSchemaName := data_def_structure_name;]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+    <Property Name="data_pointer" Id="{07abae9f-fcfc-4930-be5e-bc498c167473}">
+      <Declaration><![CDATA[PROPERTY PUBLIC data_pointer : T_Arg]]></Declaration>
+      <Get Name="Get" Id="{91fd2a72-f38a-48ad-a8d9-3b379b6c1197}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[data_pointer := gRecordPointer;]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{4c0a6bcb-e79a-4e5a-a3b2-b65082e77189}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[gRecordPointer := data_pointer;]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+    <Property Name="db_table_name" Id="{457088bd-30e0-4a96-b934-15df6743d6b6}">
+      <Declaration><![CDATA[PROPERTY PUBLIC db_table_name : Tc2_System.T_MaxString]]></Declaration>
+      <Get Name="Get" Id="{4d8d5759-a539-49cb-92e4-0c653a06c4e1}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{5583acd3-dff8-4ba3-acf1-2446e6b0a828}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[sMeasurementName := db_table_name;]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+    <Property Name="index" Id="{2cd967fd-5fa9-4645-9ac7-7c80e69c201d}">
+      <Declaration><![CDATA[PROPERTY PUBLIC index : UDINT ]]></Declaration>
+      <Get Name="Get" Id="{0b55b3f6-4958-4ca5-9778-68f6ede6f192}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[index := current_index;]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{5268f547-a543-47a9-b5ad-fb8f56729f3a}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+    <Property Name="minimum_chunk_size" Id="{7194ace4-c543-4d3b-bb4c-7732e82ecf0f}">
+      <Declaration><![CDATA[PROPERTY PUBLIC minimum_chunk_size : UDINT]]></Declaration>
+      <Get Name="Get" Id="{a7346a3e-d6df-4d67-acd9-15108b0b7d1f}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{bf381183-3550-45b7-9d0d-d87b431cae4d}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[nMinimumChunkSize := minimum_chunk_size;
+]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+    <Method Name="record_once" Id="{de86fac9-c1d3-47d8-8df5-68c1cbb5521d}">
+      <Declaration><![CDATA[(*
+Command will be generated once.
+
+Data insert command will be generated at every cycle. 
+
+*)
+
+METHOD record_once : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// put_data
+IF NOT command_queue.controller.full THEN
+	// put pointer
+	IF command_queue.current_index > command_queue.buffer_size THEN
+		command_queue.current_index := 0;
+	END_IF
+	
+	// set value of insert command
+	command_queue.buffer_body[command_queue.current_index].data_body := gRecordPointer;
+	command_queue.buffer_body[command_queue.current_index].start_time := F_GetSystemTime();
+	command_queue.buffer_body[command_queue.current_index].cycle_time_100ns := nCycleTime;
+	command_queue.buffer_body[command_queue.current_index].chunk_size := data_size;
+	command_queue.buffer_body[command_queue.current_index].MeasurementName := sMeasurementName;
+	command_queue.buffer_body[command_queue.current_index].SchemaName := sSchemaName;
+	command_queue.buffer_body[command_queue.current_index].ref_data_buffer_counter REF= data_count;
+	// queue in
+	IF  data_size <= (nDataBufferMaxIndex - data_count) THEN
+		command_queue.controller.put(
+			lData := F_BIGTYPE(
+				pData := ADR(command_queue.buffer_body[command_queue.current_index]), 
+				cbLen := SIZEOF(command_queue.buffer_body[command_queue.current_index])
+			)
+		);
+		data_count := data_count + command_queue.buffer_body[command_queue.current_index].chunk_size;
+		command_queue.current_index := command_queue.current_index + 1;
+	END_IF
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="upper_bound_of_data_buffer" Id="{f8195cd1-4b1c-4c66-b057-b390adf2edea}">
+      <Declaration><![CDATA[PROPERTY PUBLIC upper_bound_of_data_buffer : UDINT]]></Declaration>
+      <Get Name="Get" Id="{3661889e-c6c5-41e5-ac1c-840bad373726}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{90946641-4400-49dd-b911-8d0d9ebdf329}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[nDataBufferMaxIndex := upper_bound_of_data_buffer;]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+    <LineIds Name="RecordDataQueue">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="RecordDataQueue.cycle_time.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="RecordDataQueue.cycle_time.Set">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="RecordDataQueue.cyclic_record">
+      <LineId Id="6" Count="5" />
+      <LineId Id="33" Count="1" />
+      <LineId Id="81" Count="1" />
+      <LineId Id="85" Count="0" />
+      <LineId Id="88" Count="2" />
+      <LineId Id="86" Count="0" />
+      <LineId Id="91" Count="1" />
+      <LineId Id="83" Count="0" />
+      <LineId Id="74" Count="0" />
+      <LineId Id="49" Count="6" />
+      <LineId Id="78" Count="0" />
+      <LineId Id="56" Count="7" />
+      <LineId Id="93" Count="0" />
+      <LineId Id="95" Count="0" />
+      <LineId Id="94" Count="0" />
+      <LineId Id="64" Count="0" />
+      <LineId Id="84" Count="0" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="105" Count="2" />
+      <LineId Id="101" Count="1" />
+      <LineId Id="100" Count="0" />
+      <LineId Id="21" Count="8" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="RecordDataQueue.data_def_structure_name.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="RecordDataQueue.data_def_structure_name.Set">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="RecordDataQueue.data_pointer.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="RecordDataQueue.data_pointer.Set">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="RecordDataQueue.db_table_name.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="RecordDataQueue.db_table_name.Set">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="RecordDataQueue.index.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="RecordDataQueue.index.Set">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="RecordDataQueue.minimum_chunk_size.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="RecordDataQueue.minimum_chunk_size.Set">
+      <LineId Id="2" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="RecordDataQueue.record_once">
+      <LineId Id="38" Count="1" />
+      <LineId Id="78" Count="3" />
+      <LineId Id="93" Count="0" />
+      <LineId Id="54" Count="6" />
+      <LineId Id="97" Count="0" />
+      <LineId Id="61" Count="5" />
+      <LineId Id="82" Count="0" />
+      <LineId Id="68" Count="0" />
+      <LineId Id="96" Count="0" />
+      <LineId Id="98" Count="0" />
+      <LineId Id="69" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="RecordDataQueue.upper_bound_of_data_buffer.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="RecordDataQueue.upper_bound_of_data_buffer.Set">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>
