@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="PerformanceData" Id="{20af9630-d113-48e9-a812-a09b65472bf4}">
+    <Declaration><![CDATA[TYPE PerformanceData EXTENDS DataTag:
+STRUCT
+	{attribute 'FieldName' := 'plc_task_time'}
+    task_time: UDINT;
+	{attribute 'FieldName' := 'cpu_usage'}
+    cpu_usage: UDINT;
+	{attribute 'FieldName' := 'latency'}
+    latency: UDINT;
+	{attribute 'FieldName' := 'max_latency'}
+    max_latency: UDINT;
+	{attribute 'FieldName' := 'exceed_counter'}
+    exceed_counter: UDINT;
+	{attribute 'FieldName' := 'ec_lost_frames'}
+    ec_lost_frames: UDINT;
+	{attribute 'FieldName' := 'ec_frame_rate'}
+    ec_frame_rate: LREAL;
+	{attribute 'FieldName' := 'ec_lost_q_frame'}
+    ec_lost_q_frames: UDINT;
+	{attribute 'FieldName' := 'ec_q_frame_rate'}
+    ec_q_frame_rate: LREAL;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <Task Name="PlcTask" Id="{ddf294a0-f4dd-4fc2-8eb9-7847f57ba41d}">
+    <!--CycleTime in micro seconds.-->
+    <CycleTime>10000</CycleTime>
+    <Priority>20</Priority>
+    <PouCall>
+      <Name>RecordToInfluxDB</Name>
+    </PouCall>
+    <TaskFBGuid>{83a09e3f-618b-45a8-b787-e4bb5214b34e}</TaskFBGuid>
+    <Fb_init>{777801b9-317b-432e-b06d-3d4c494e8d8f}</Fb_init>
+    <Fb_exit>{841f945a-b216-43a1-a67c-7266b78495e4}</Fb_exit>
+    <CycleUpdate>{264c48ed-acaa-40bf-97e0-4c4c9fd65102}</CycleUpdate>
+    <PostCycleUpdate>{36175a19-0a54-4b61-be7c-8c5f85f2ef76}</PostCycleUpdate>
+  </Task>
+</TcPlcObject>

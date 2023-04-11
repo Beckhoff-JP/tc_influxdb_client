@@ -1,0 +1,176 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="dequeue" Id="{40b5d0f5-5c4a-4c21-b039-6567ed0f3ed3}" SpecialFunc="None">
+    <Declaration><![CDATA[(*
+:Author: Takashi Ichihashi
+:Date: 2023-03-07
+
+Decreration
+=========================
+
+.. code-block:: 
+
+	// Variables for queue feature
+	fb_deq : dequeue;
+	get_data : T_Arg;
+	// databuffer for 1 second with 10 ms time delta
+    queue_buffer: ARRAY[0..99] OF T_Arg;
+	
+
+Useage
+=================
+
+This is example code that the sInputData is queued in and queued out for sOutputData.
+
+.. code-block:: 
+
+	// put_data
+	IF NOT fb_deq.full THEN
+
+		sInputData := ANY_DATA;
+		// put pointer
+		fb_deq.put(F_BIGTYPE(ADR(sInputData),SIZEOF(sInputData)));
+
+	END_IF
+	
+	// getting data
+	get_data := fb_deq.get();
+	MEMCPY(ADR(sOutputData), get_data.pData, get_data.cbLen);
+	
+	
+*)
+
+FUNCTION_BLOCK dequeue
+
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+	num_of_data:	UDINT;
+	full:			BOOL;
+END_VAR
+VAR
+	nWriteIndex: UDINT;
+	nReadIndex: UDINT;
+END_VAR
+
+VAR_IN_OUT
+	aData:		ARRAY [*] OF T_Arg;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[full :=  num_of_data >= DINT_TO_UDINT(UPPER_BOUND(aData,1));
+
+]]></ST>
+    </Implementation>
+    <Method Name="get" Id="{8b74c0af-e452-4b04-80b6-4bc8c107a41d}">
+      <Declaration><![CDATA[METHOD get : T_Arg
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//Set buffer index
+
+IF num_of_data > 0 THEN
+	get := aData[nReadIndex];
+	num_of_data := num_of_data - 1;
+	nReadIndex := nReadIndex + 1;
+	IF nReadIndex > DINT_TO_UDINT(UPPER_BOUND(aData, 1)) THEN
+		nReadIndex := DINT_TO_UDINT(LOWER_BOUND(aData, 1));
+	END_IF
+END_IF
+
+RETURN;]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="index" Id="{797924aa-4aac-4502-9933-1db6ff110751}">
+      <Declaration><![CDATA[PROPERTY PUBLIC index : UDINT]]></Declaration>
+      <Get Name="Get" Id="{1aa0817d-5541-4bd9-8c6c-c4f73615a599}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[index := nWriteIndex;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="max_index" Id="{d2cc1e4e-f8ed-4e95-bcc4-f73c95718a81}">
+      <Declaration><![CDATA[PROPERTY PUBLIC max_index : UDINT]]></Declaration>
+      <Get Name="Get" Id="{d83f4ff6-13c9-4c3f-9065-ce9aeb94ccfb}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[max_index := DINT_TO_UDINT(UPPER_BOUND(aData, 1));]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{ad8e00b7-5dcf-4645-b77d-fd079abe6812}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+    <Method Name="put" Id="{bc495a1c-f6bd-4bba-8df0-e2c2c6cddb62}">
+      <Declaration><![CDATA[METHOD PUBLIC put : UDINT
+VAR_INPUT
+	lData:	T_Arg;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//Set buffer index
+
+IF num_of_data >= DINT_TO_UDINT(UPPER_BOUND(aData, 1)) THEN
+	put := 0;
+ELSE
+	MEMCPY(ADR(aData[nWriteIndex]), ADR(lData), SIZEOF(lData));
+	num_of_data := num_of_data + 1;
+	nWriteIndex := nWriteIndex + 1;
+	IF nWriteIndex > DINT_TO_UDINT(UPPER_BOUND(aData, 1)) THEN
+		nWriteIndex := DINT_TO_UDINT(LOWER_BOUND(aData, 1));
+	END_IF
+	put := 1;
+END_IF
+
+RETURN;]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="dequeue">
+      <LineId Id="156" Count="0" />
+      <LineId Id="174" Count="0" />
+      <LineId Id="173" Count="0" />
+    </LineIds>
+    <LineIds Name="dequeue.get">
+      <LineId Id="6" Count="0" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="12" Count="0" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="17" Count="3" />
+      <LineId Id="24" Count="0" />
+      <LineId Id="16" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="dequeue.index.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="dequeue.max_index.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="dequeue.max_index.Set">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="dequeue.put">
+      <LineId Id="6" Count="0" />
+      <LineId Id="31" Count="2" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="37" Count="1" />
+      <LineId Id="7" Count="2" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="43" Count="0" />
+      <LineId Id="36" Count="0" />
+      <LineId Id="29" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

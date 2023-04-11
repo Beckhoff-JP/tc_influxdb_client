@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <GVL Name="GVL" Id="{6f3eba4c-e974-471d-8fe6-3536cf2de0a1}">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+VAR_GLOBAL CONSTANT
+	COMMAND_BUFFER_SIZE :UDINT := 100; // Queue size for database insert command.
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>

@@ -1,0 +1,134 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="PLCTaskMeasurement" Id="{0c37f135-f190-42ce-b58b-b7e6acdd626d}" SpecialFunc="None">
+    <Declaration><![CDATA[(*
+
+このファンクションブロックは、IPCの各種パフォーマンス情報を収集する機能を持ちます。
+	  
+.. csv-table::
+	:header: Rev., Date,Description
+	
+	0, 2023-02-27,Initial edition
+
+Overview
+=====================
+
+このファンクションブロックは、RealTimeのOnlineタブで表示しているCPU占有率やレイテンシ、および、PlcTaskのOnlineタブで表示しているタスク実行時間、Exceedカウンタをまとめて収集します。
+
+.. figure:: ../../LibraryBundle/real_time_online.png
+	:width: 500px
+	:align: center
+
+.. figure:: ../../LibraryBundle/plc_task_online.png
+	:width: 500px
+	:align: center
+
+	
+*)
+FUNCTION_BLOCK PLCTaskMeasurement
+VAR_INPUT
+	ads_port_of_task: UINT  := 350;
+	ec_master_netid: T_AmsNetId;
+END_VAR
+VAR_OUTPUT
+	total_task_time: UDINT; // Totally plc task execution time
+	max_latency: UDINT; // Maximum system latency since IPC has been started.
+	latency:	UDINT;  // Current system latency( $us$ ). 
+	exceed_counter: UDINT; // Exceeded counter.
+	cpu_usage: UDINT; // CPU usage 
+	ec_lost_frames: UDINT; // EtherCAT packet frame losted.
+	ec_frame_rate: LREAL;  // EtherCAT packet count per second.
+	ec_lost_q_frames: UDINT; // EtherCAT packet frame losted. (queued)
+	ec_q_frame_rate: LREAL; // EtherCAT packet count per second. (queued)
+	system_time: ULINT; // Current epoch time.
+END_VAR
+VAR
+	
+	// For PLC task execution time
+	get_task_idx : GETCURTASKINDEX;
+	
+	// CPU Usage
+	fb_cpu_usage:	TC_CpuUsage;
+	_get_cpu_usage:	BOOL;
+
+	// Latency
+	fb_get_latency: TC_SysLatency;
+	_get_latency: BOOL;
+	
+	// Exceed Counter
+	fb_read_exceed_counter:	FB_ReadTaskExceedCounter;
+	_get_exceed_counter: BOOL;
+	
+	// EtherCAT
+	fb_ec_master_frame_statistic :FB_EcMasterFrameStatistic;
+	_get_ecat_diag: BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// get current time
+system_time := F_GetSystemTime();
+ 
+// Total Task  Time
+total_task_time := F_GetTaskTotalTime(nTaskIndex := get_task_idx.index);
+
+// CPU usage report
+IF NOT _get_cpu_usage THEN
+	fb_cpu_usage(START := TRUE);
+	_get_cpu_usage := TRUE;
+ELSE
+	fb_cpu_usage(START := FALSE);
+	IF NOT fb_cpu_usage.BUSY THEN
+		cpu_usage := fb_cpu_usage.USAGE;
+		_get_cpu_usage := FALSE;
+	END_IF
+END_IF
+
+// Latency report
+IF NOT _get_latency THEN
+	fb_get_latency(START := TRUE);
+	_get_latency := TRUE;
+ELSE
+	fb_get_latency(START := FALSE);
+	IF NOT fb_get_latency.BUSY THEN
+		max_latency := fb_get_latency.MAXIMUM;
+		latency := fb_get_latency.ACTUAL;
+		_get_latency := FALSE;
+	END_IF
+END_IF
+
+// Exceed counter
+IF NOT _get_exceed_counter THEN
+	fb_read_exceed_counter(bExecute := TRUE, nTaskAdsPort := ads_port_of_task);
+	_get_exceed_counter := TRUE;
+ELSE
+	fb_read_exceed_counter(bExecute := FALSE);
+	IF NOT fb_read_exceed_counter.bBusy THEN
+		exceed_counter := fb_read_exceed_counter.nExceedCounter;
+		_get_exceed_counter := FALSE;
+	END_IF
+END_IF
+	
+// EtherCAT frame diagnostics
+
+IF NOT _get_ecat_diag THEN
+	fb_ec_master_frame_statistic(bExecute := TRUE, sNetId := ec_master_netid);
+	_get_ecat_diag := TRUE;
+ELSE
+	fb_ec_master_frame_statistic(bExecute := FALSE);
+	IF NOT fb_ec_master_frame_statistic.bBusy THEN
+		ec_lost_frames := fb_ec_master_frame_statistic.nLostFrames;
+		ec_frame_rate := fb_ec_master_frame_statistic.fFramesPerSecond;
+		ec_lost_q_frames := fb_ec_master_frame_statistic.nLostQueuedFrames;
+		ec_q_frame_rate := fb_ec_master_frame_statistic.fQueuedFramesPerSecond;
+		_get_ecat_diag := FALSE;
+	END_IF
+END_IF
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="PLCTaskMeasurement">
+      <LineId Id="773" Count="58" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>
