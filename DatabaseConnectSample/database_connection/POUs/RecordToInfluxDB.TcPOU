@@ -32,7 +32,7 @@ History
 PROGRAM RecordToInfluxDB
 
 VAR CONSTANT
-	RECORD_DATA_MAX_INDEX: UDINT := 4999;
+	RECORD_DATA_MAX_INDEX: UDINT := 9999;
 	TARGET_DBID: UDINT := 1;
 END_VAR
 
@@ -85,7 +85,7 @@ fb_PLCTaskMeasurement(ec_master_netid := '169.254.55.71.4.1');
 // Add PLC calculation stress step by step.
 test_timer(IN := NOT test_timer.Q, PT := T#15M);
 IF test_timer.Q THEN
-	target := target + 5000;
+	target := target + 500;
 END_IF
 
 // On processing
@@ -100,7 +100,7 @@ IF bExecuting THEN
 END_IF
 
 IF fb_PLCTaskMeasurement.cpu_usage > 30 THEN
-	target := 5000;
+	target := 500;
 END_IF
 
 // Tag Data set
@@ -158,7 +158,7 @@ fbPerfromanceDataCommandBuffer.data_pointer := F_BIGTYPE(
 // Insert command queue
 fbPerfromanceDataCommandBuffer.db_table_name := 'PerformanceData';
 fbPerfromanceDataCommandBuffer.data_def_structure_name := 'PerformanceData';
-fbPerfromanceDataCommandBuffer.minimum_chunk_size := 500;
+fbPerfromanceDataCommandBuffer.minimum_chunk_size := 100;
 fbPerfromanceDataCommandBuffer.upper_bound_of_data_buffer	:= RECORD_DATA_MAX_INDEX;
 
 fbPerfromanceDataCommandBuffer(
@@ -196,7 +196,7 @@ fbThroughputDataCommandBuffer.data_pointer := F_BIGTYPE(
 // Insert command queue
 fbThroughputDataCommandBuffer.db_table_name := 'DatabaseThroughput';
 fbThroughputDataCommandBuffer.data_def_structure_name := 'DatabaseThroughput';
-fbThroughputDataCommandBuffer.minimum_chunk_size := 500;
+fbThroughputDataCommandBuffer.minimum_chunk_size := 100;
 fbThroughputDataCommandBuffer.upper_bound_of_data_buffer	:= RECORD_DATA_MAX_INDEX;
 
 fbThroughputDataCommandBuffer(

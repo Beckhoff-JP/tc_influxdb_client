@@ -112,6 +112,9 @@ END_VAR
 			// getting data
 			get_data_t := command_queue.controller.get();
 			MEMCPY(ADR(get_data), get_data_t.pData, get_data_t.cbLen);
+			IF __ISVALIDREF( get_data.ref_data_buffer_counter) THEN
+				get_data.ref_data_buffer_counter := get_data.ref_data_buffer_counter - get_data.chunk_size;
+			END_IF
 			// Data set
 			fbNoSQLQueryBuilder_TimeSeriesDB.pQueryOptions := ADR(QueryOption_TSDB_Insert);
 			fbNoSQLQueryBuilder_TimeSeriesDB.cbQueryOptions := SIZEOF(QueryOption_TSDB_Insert);    
@@ -132,10 +135,7 @@ END_VAR
 			IF fbNoSqlQueryEvt.bError THEN
 				TcResult := fbNoSqlQueryEvt.ipTcResult;                
 				State := E_DbLogState.error;
-			ELSE
-				IF __ISVALIDREF( get_data.ref_data_buffer_counter) THEN
-					get_data.ref_data_buffer_counter := get_data.ref_data_buffer_counter - get_data.chunk_size;
-				END_IF				
+			ELSE		
 				State := E_DbLogState.idle;
 				bError := FALSE;
 			END_IF
@@ -153,11 +153,11 @@ END_CASE
     </Implementation>
     <LineIds Name="RecordInfluxDB">
       <LineId Id="2293" Count="10" />
-      <LineId Id="2305" Count="23" />
-      <LineId Id="2547" Count="0" />
-      <LineId Id="2550" Count="0" />
-      <LineId Id="2549" Count="0" />
-      <LineId Id="2329" Count="12" />
+      <LineId Id="2305" Count="1" />
+      <LineId Id="2649" Count="0" />
+      <LineId Id="2653" Count="1" />
+      <LineId Id="2652" Count="0" />
+      <LineId Id="2308" Count="33" />
       <LineId Id="9" Count="0" />
     </LineIds>
   </POU>

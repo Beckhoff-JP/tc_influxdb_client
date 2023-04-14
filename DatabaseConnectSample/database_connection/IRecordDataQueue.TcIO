@@ -42,6 +42,15 @@ PROPERTY PUBLIC index : UDINT]]></Declaration>
         <Declaration><![CDATA[]]></Declaration>
       </Set>
     </Property>
+    <Property Name="maximum_chunk_size" Id="{7a94cbb4-b24e-443c-aabb-dc5414dfa4c9}">
+      <Declaration><![CDATA[PROPERTY maximum_chunk_size : UDINT]]></Declaration>
+      <Get Name="Get" Id="{cf3710d9-5918-491c-a2ff-2c5f44d3264b}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+      <Set Name="Set" Id="{b533eb3d-6ac6-4f49-a503-6604a7a8d836}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Set>
+    </Property>
     <Property Name="minimum_chunk_size" Id="{42e269e0-c904-48ea-a9c1-9c6264540f8d}">
       <Declaration><![CDATA[(*
 Mininum chunk record count for dynamic insert.

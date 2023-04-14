@@ -10,7 +10,8 @@ VAR
 	current_index	: UDINT; // current index value
 	sMeasurementName			: Tc2_System.T_MaxString;	// Measurement name of InfluxDB
 	sSchemaName					: Tc2_System.T_MaxString;	// Schema name as a inserted data variable type name as structure
-	nMinimumChunkSize			: UDINT := 300;				// Minimum segemnt size
+	min_chunk_size				: UDINT := 300;				// Minimum chunk size
+	max_chunk_size				:UDINT	:= 10000;			// Maximum chunk size
 	nDataBufferMaxIndex			: UDINT := 1;				// upper bound of data buffer array.			
 	gRecordPointer				: Tc2_Utilities.T_Arg;		// Current data index
 	// Variables for queue feature
@@ -26,7 +27,11 @@ VAR
 	data_count		: UDINT := 0;		// buffer usage
 	
 	start_index		: UDINT;
-	command_q_usage	: REAL;				// data usage percentage of command queue.
+	buffer_usage	: REAL;				// data usage percentage of data buffer.
+	diff_target		: REAL;
+	pid_ope			: REAL;
+	buffer_usage_spec	: REAL := 0.01;
+	
 	recording		: BOOL;
 	chunk_size : UDINT;
 	bContinue		: BOOL;
@@ -77,6 +82,7 @@ END_VAR
 END_IF
 
 IF next_index <= current_index OR current_index >= nDataBufferMaxIndex THEN
+	max_chunk_size := nDataBufferMaxIndex + 1;
 	// put_data
 	IF NOT command_queue.controller.full THEN
 		data_size := current_index - start_index + 1;
@@ -113,11 +119,15 @@ IF next_index <= current_index OR current_index >= nDataBufferMaxIndex THEN
 		END_IF
 	END_IF
 	// calculate next index
-	command_q_usage := UDINT_TO_REAL(command_queue.controller.num_of_data) / UDINT_TO_REAL(command_queue.buffer_size);
-	chunk_size := REAL_TO_UDINT(command_q_usage * UDINT_TO_REAL(nDataBufferMaxIndex + 1));
-	IF chunk_size < nMinimumChunkSize THEN
-		chunk_size := nMinimumChunkSize;
-	END_IF	
+	buffer_usage := UDINT_TO_REAL(data_count) / UDINT_TO_REAL(nDataBufferMaxIndex + 1);
+	diff_target := UDINT_TO_REAL(max_chunk_size) * (buffer_usage - buffer_usage_spec);
+	pid_ope := UDINT_TO_REAL(min_chunk_size) + diff_target;
+	chunk_size := REAL_TO_UDINT(pid_ope);
+	IF chunk_size < min_chunk_size THEN
+		chunk_size := min_chunk_size;
+	ELSIF chunk_size > max_chunk_size THEN
+		chunk_size := max_chunk_size;
+	END_IF		
 	next_index := current_index + chunk_size;
 END_IF
 
@@ -206,6 +216,25 @@ END_VAR
         </Implementation>
       </Set>
     </Property>
+    <Property Name="maximum_chunk_size" Id="{02c2c686-c7db-499b-a50c-3e861736b577}">
+      <Declaration><![CDATA[PROPERTY PUBLIC maximum_chunk_size : UDINT]]></Declaration>
+      <Get Name="Get" Id="{0baff072-67eb-4a7c-8fad-76d523574483}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[maximum_chunk_size := max_chunk_size;]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{59369926-4939-4df1-910f-88ccb0b731a6}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[max_chunk_size := maximum_chunk_size;]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
     <Property Name="minimum_chunk_size" Id="{7194ace4-c543-4d3b-bb4c-7732e82ecf0f}">
       <Declaration><![CDATA[PROPERTY PUBLIC minimum_chunk_size : UDINT]]></Declaration>
       <Get Name="Get" Id="{a7346a3e-d6df-4d67-acd9-15108b0b7d1f}">
@@ -213,7 +242,7 @@ END_VAR
 END_VAR
 ]]></Declaration>
         <Implementation>
-          <ST><![CDATA[]]></ST>
+          <ST><![CDATA[minimum_chunk_size := min_chunk_size;]]></ST>
         </Implementation>
       </Get>
       <Set Name="Set" Id="{bf381183-3550-45b7-9d0d-d87b431cae4d}">
@@ -221,7 +250,7 @@ END_VAR
 END_VAR
 ]]></Declaration>
         <Implementation>
-          <ST><![CDATA[nMinimumChunkSize := minimum_chunk_size;
+          <ST><![CDATA[min_chunk_size := minimum_chunk_size;
 ]]></ST>
         </Implementation>
       </Set>
@@ -298,7 +327,9 @@ END_VAR
     </LineIds>
     <LineIds Name="RecordDataQueue.cyclic_record">
       <LineId Id="6" Count="5" />
-      <LineId Id="33" Count="1" />
+      <LineId Id="147" Count="0" />
+      <LineId Id="149" Count="0" />
+      <LineId Id="34" Count="0" />
       <LineId Id="81" Count="1" />
       <LineId Id="85" Count="0" />
       <LineId Id="88" Count="2" />
@@ -315,10 +346,14 @@ END_VAR
       <LineId Id="64" Count="0" />
       <LineId Id="84" Count="0" />
       <LineId Id="13" Count="0" />
-      <LineId Id="105" Count="2" />
-      <LineId Id="101" Count="1" />
-      <LineId Id="100" Count="0" />
-      <LineId Id="21" Count="8" />
+      <LineId Id="105" Count="1" />
+      <LineId Id="115" Count="0" />
+      <LineId Id="122" Count="0" />
+      <LineId Id="133" Count="0" />
+      <LineId Id="142" Count="1" />
+      <LineId Id="139" Count="2" />
+      <LineId Id="126" Count="0" />
+      <LineId Id="22" Count="7" />
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="RecordDataQueue.data_def_structure_name.Get">
@@ -343,6 +378,12 @@ END_VAR
       <LineId Id="2" Count="0" />
     </LineIds>
     <LineIds Name="RecordDataQueue.index.Set">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="RecordDataQueue.maximum_chunk_size.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="RecordDataQueue.maximum_chunk_size.Set">
       <LineId Id="2" Count="0" />
     </LineIds>
     <LineIds Name="RecordDataQueue.minimum_chunk_size.Get">
