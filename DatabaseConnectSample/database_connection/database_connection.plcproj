@@ -18,7 +18,7 @@
     <Company>Beckhoff co. ltd.</Company>
     <Released>false</Released>
     <Title>influxdb-client</Title>
-    <ProjectVersion>1.0.0.1</ProjectVersion>
+    <ProjectVersion>1.0.0.2</ProjectVersion>
     <DefaultNamespace>bajp</DefaultNamespace>
     <DocFormat>reStructuredText</DocFormat>
     <LibraryCategories>
