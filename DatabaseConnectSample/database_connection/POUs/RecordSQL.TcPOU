@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
-  <POU Name="RecordInfluxDB" Id="{8024213b-1b7f-44f6-b63f-23d9e46d68db}" SpecialFunc="None">
+  <POU Name="RecordSQL" Id="{c22ca813-56d1-45d3-a2ad-9ac2c556a6da}" SpecialFunc="None">
     <Declaration><![CDATA[(*
 :Author: 
 
@@ -70,9 +70,10 @@ As first you have to deine data model that the sampling data to insert to influx
 	
 *)
 
-FUNCTION_BLOCK RecordInfluxDB IMPLEMENTS IRecordDB
+FUNCTION_BLOCK RecordSQL IMPLEMENTS IRecordDB
 VAR_INPUT
 	nDBID						: UDINT;					// Database ID for TF6420
+	DB_Parameter				: Tc2_Utilities.T_Arg;
 END_VAR
 VAR_OUTPUT
 	bBusy			: BOOL;	// In writing database
@@ -81,9 +82,17 @@ VAR_OUTPUT
     sErrorMessage	: STRING(255);	// Error message
 END_VAR
 VAR
-	QueryOption_TSDB_Insert 			: T_QueryOptionTimeSeriesDB_Insert; // defines detailed Queryparameter
-    fbNoSQLQueryBuilder_TimeSeriesDB 	: FB_NoSQLQueryBuilder_TimeSeriesDB; // defines database type specific api
-    fbNoSqlQueryEvt 					: FB_NoSQLQueryEvt(sNetID := '', tTimeout := T#15S); // functionblock to execute queries
+	
+	//for generating timestamp
+	fbGetSystemTime1: GetSystemTime;
+	dwTimeLoDW: DWORD;
+	dwTimeHiDW: DWORD;
+	tFileTime: T_FILETIME;
+	nTimestamp: LINT;
+	
+	//for insert samples
+	fbPLCDBCmd: FB_PLCDBCmdEvt(sNetID := '', tTimeout := T#19S);
+	_query								: STRING(512);
 	
 	// Variables for queue feature
 	get_data_t 			: T_Arg;
@@ -100,58 +109,53 @@ END_VAR
 
 	E_DbLogState.idle:
 		
-		IF NOT fbNoSqlQueryEvt.bBusy THEN
+		IF NOT fbPLCDBCmd.bBusy THEN
 			State := E_DbLogState.init;
 		END_IF
 
 	E_DbLogState.init:
 	
-		IF NOT fbNoSqlQueryEvt.bBusy AND command_queue.controller.num_of_data > 0 THEN
+		IF NOT fbPLCDBCmd.bBusy AND command_queue.controller.num_of_data > 0 THEN
 			// getting data
 			get_data_t := command_queue.controller.get();
 			MEMCPY(ADR(get_data), get_data_t.pData, get_data_t.cbLen);
 			IF __ISVALIDREF( get_data.ref_data_buffer_counter) THEN
 				get_data.ref_data_buffer_counter := get_data.ref_data_buffer_counter - get_data.chunk_size;
 			END_IF
-			// Data set
-			fbNoSQLQueryBuilder_TimeSeriesDB.pQueryOptions := ADR(QueryOption_TSDB_Insert);
-			fbNoSQLQueryBuilder_TimeSeriesDB.cbQueryOptions := SIZEOF(QueryOption_TSDB_Insert);    
-			QueryOption_TSDB_Insert.sTableName := get_data.MeasurementName;
-			QueryOption_TSDB_Insert.sDataType := get_data.SchemaName;
-			QueryOption_TSDB_Insert.pSymbol := get_data.data_body.pData;
-			QueryOption_TSDB_Insert.cbSymbol := get_data.data_body.cbLen * get_data.chunk_size;
-			QueryOption_TSDB_Insert.nDataCount := get_data.chunk_size;
-			QueryOption_TSDB_Insert.nStartTimestamp := get_data.start_time;
-			QueryOption_TSDB_Insert.nCycleTime := get_data.cycle_time_100ns; // (in 100 ns)
 			State := E_DbLogState.writing;
 		
 		END_IF
 
 	E_DbLogState.writing:
-	
-		IF fbNoSqlQueryEvt.Execute(nDBID, fbNoSQLQueryBuilder_TimeSeriesDB) THEN
-			IF fbNoSqlQueryEvt.bError THEN
-				TcResult := fbNoSqlQueryEvt.ipTcResult;                
+		//Write buffer element to database
+		IF fbPLCDBCmd.Execute(nDBID, 
+							ADR(_query), 
+							SIZEOF(_query), 
+							get_data.data_body.pData, 
+							get_data.data_body.cbLen * get_data.chunk_size, 
+							DB_Parameter.pData, 
+							DB_Parameter.cbLen) THEN
+			IF fbPLCDBCmd.bError THEN
 				State := E_DbLogState.error;
-			ELSE		
+			ELSE
 				State := E_DbLogState.init;
-				bError := FALSE;
-			END_IF
+			END_IF				
 		END_IF
+		
 
 	E_DbLogState.error:
-	
-		IF TcResult.RequestEventText(1033, sErrorMessage, SIZEOF(sErrorMessage)) THEN
-            TcResult.Send(F_GetSystemTime());
+		//IF TcResult.RequestEventText(1033, sErrorMessage, SIZEOF(sErrorMessage)) THEN
+            //TcResult.Send(F_GetSystemTime());
             State := E_DbLogState.idle;
             bError := TRUE;
-        END_IF
+        //END_IF
+
 END_CASE
 ]]></ST>
     </Implementation>
-    <Property Name="query" Id="{7e57657a-d85c-4631-883e-c305de006ca2}">
+    <Property Name="query" Id="{c27af420-79a3-4c17-9de5-9795776e9055}">
       <Declaration><![CDATA[PROPERTY query : STRING(512)]]></Declaration>
-      <Get Name="Get" Id="{4fd43ba5-1758-4a54-88af-ba966b369766}">
+      <Get Name="Get" Id="{651a9235-26b1-4e78-a03a-bd56be9eaa4a}">
         <Declaration><![CDATA[VAR
 END_VAR
 ]]></Declaration>
@@ -159,28 +163,38 @@ END_VAR
           <ST><![CDATA[]]></ST>
         </Implementation>
       </Get>
-      <Set Name="Set" Id="{9f86d508-39b1-4975-a9ac-17a41a04a9c6}">
+      <Set Name="Set" Id="{57239635-62be-4167-b083-03e5cdbcae9c}">
         <Declaration><![CDATA[VAR
 END_VAR
 ]]></Declaration>
         <Implementation>
-          <ST><![CDATA[]]></ST>
+          <ST><![CDATA[_query := query;]]></ST>
         </Implementation>
       </Set>
     </Property>
-    <LineIds Name="RecordInfluxDB">
+    <LineIds Name="RecordSQL">
       <LineId Id="2293" Count="10" />
       <LineId Id="2305" Count="1" />
       <LineId Id="2649" Count="0" />
       <LineId Id="2653" Count="1" />
       <LineId Id="2652" Count="0" />
-      <LineId Id="2308" Count="33" />
+      <LineId Id="2318" Count="4" />
+      <LineId Id="2889" Count="0" />
+      <LineId Id="2891" Count="0" />
+      <LineId Id="3035" Count="5" />
+      <LineId Id="2892" Count="2" />
+      <LineId Id="2907" Count="2" />
+      <LineId Id="2911" Count="1" />
+      <LineId Id="2334" Count="0" />
+      <LineId Id="2926" Count="3" />
+      <LineId Id="2919" Count="0" />
+      <LineId Id="2340" Count="1" />
       <LineId Id="9" Count="0" />
     </LineIds>
-    <LineIds Name="RecordInfluxDB.query.Get">
+    <LineIds Name="RecordSQL.query.Get">
       <LineId Id="2" Count="0" />
     </LineIds>
-    <LineIds Name="RecordInfluxDB.query.Set">
+    <LineIds Name="RecordSQL.query.Set">
       <LineId Id="2" Count="0" />
     </LineIds>
   </POU>

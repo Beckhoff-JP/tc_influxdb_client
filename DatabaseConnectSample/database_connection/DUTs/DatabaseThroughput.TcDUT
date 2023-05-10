@@ -9,6 +9,8 @@ STRUCT
     current_index: UDINT;
 	{attribute 'FieldName' := 'DB_buffer_next_index'}
     next_index: UDINT;
+	{attribute 'FieldName' := 'DB_buffer_usage'}
+	buffer_usage: REAL;
 END_STRUCT
 END_TYPE
 ]]></Declaration>

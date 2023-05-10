@@ -1,0 +1,100 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="DbWriteSQL" Id="{d99140a2-1d97-448e-aae1-f54c100bda8a}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM DbWriteSQL
+VAR
+	tmp_str : ARRAY [0..2] OF STRING(512);
+	// Cycle record data
+	fbSQLRecorder	:RecordSQL;
+	i				:UINT;
+	ExpParameter	:ARRAY [0..9] OF ST_ExpParameter;
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+ExpParameter[0].sParaName:= 'time_stamp'; 		ExpParameter[0].nParaSize:= 4; 	ExpParameter[0].eParaType:= E_ExpParameterType.DateTime;
+ExpParameter[1].sParaName:= 'task_time'; 		ExpParameter[1].nParaSize:= 4; 	ExpParameter[1].eParaType:= E_ExpParameterType.Int32;
+ExpParameter[2].sParaName:= 'cpu_usage'; 		ExpParameter[2].nParaSize:= 4; 	ExpParameter[2].eParaType:= E_ExpParameterType.Int32;
+ExpParameter[3].sParaName:= 'latency'; 		ExpParameter[3].nParaSize:= 4; 	ExpParameter[3].eParaType:= E_ExpParameterType.Int32;
+ExpParameter[4].sParaName:= 'max_latency'; 		ExpParameter[4].nParaSize:= 4; 	ExpParameter[4].eParaType:= E_ExpParameterType.Int32;
+ExpParameter[5].sParaName:= 'exceed_counter'; 		ExpParameter[5].nParaSize:= 4; 	ExpParameter[5].eParaType:= E_ExpParameterType.Int32;
+ExpParameter[6].sParaName:= 'db_insert_queue_count'; 		ExpParameter[6].nParaSize:= 4; 	ExpParameter[6].eParaType:= E_ExpParameterType.Int32;
+ExpParameter[7].sParaName:= 'current_index'; 		ExpParameter[7].nParaSize:= 4; 	ExpParameter[7].eParaType:= E_ExpParameterType.Int32;
+ExpParameter[8].sParaName:= 'next_index'; 		ExpParameter[8].nParaSize:= 4; 	ExpParameter[8].eParaType:= E_ExpParameterType.Int32;
+ExpParameter[9].sParaName:= 'buffer_usage'; 		ExpParameter[9].nParaSize:= 4; 	ExpParameter[9].eParaType:= E_ExpParameterType.Float32;
+
+tmp_str[0] := 'INSERT INTO performance_data ( time_stamp, task_time, cpu_usage, latency, max_latency, exceed_counter, db_insert_queue_count, current_index, next_index, buffer_usage ) values (';
+
+FOR i := 0 TO 9 DO
+	IF i > 0 THEN
+		tmp_str[1] := ',';
+		Tc2_Utilities.CONCAT2(ADR(tmp_str[0]),ADR(tmp_str[1]), ADR(tmp_str[2]), SIZEOF(tmp_str[2])); 
+		tmp_str[0] := tmp_str[2];
+	END_IF
+	
+	tmp_str[1] := '{';
+	Tc2_Utilities.CONCAT2(ADR(tmp_str[0]),ADR(tmp_str[1]), ADR(tmp_str[2]), SIZEOF(tmp_str[2])); 
+	tmp_str[0] := tmp_str[2];
+
+	tmp_str[1] := ExpParameter[i].sParaName;
+	Tc2_Utilities.CONCAT2(ADR(tmp_str[0]),ADR(tmp_str[1]), ADR(tmp_str[2]), SIZEOF(tmp_str[2])); 
+	tmp_str[0] := tmp_str[2];
+
+	tmp_str[1] := '}';
+	Tc2_Utilities.CONCAT2(ADR(tmp_str[0]),ADR(tmp_str[1]), ADR(tmp_str[2]), SIZEOF(tmp_str[2])); 
+	tmp_str[0] := tmp_str[2];
+
+END_FOR
+
+tmp_str[1] := ');';
+Tc2_Utilities.CONCAT2(ADR(tmp_str[0]),ADR(tmp_str[1]), ADR(tmp_str[2]), SIZEOF(tmp_str[2])); 
+fbSQLRecorder.query := tmp_str[2];
+
+// Insert DB
+
+fbSQLRecorder(
+	command_queue := GVL.psql_command_queue,
+	nDBID := 5,      // Database ID by TF6420 configurator
+	DB_Parameter := F_BIGTYPE(pData := ADR(ExpParameter), cbLen := SIZEOF(ExpParameter))
+);]]></ST>
+    </Implementation>
+    <LineIds Name="DbWriteSQL">
+      <LineId Id="47" Count="0" />
+      <LineId Id="41" Count="0" />
+      <LineId Id="51" Count="0" />
+      <LineId Id="53" Count="0" />
+      <LineId Id="55" Count="0" />
+      <LineId Id="57" Count="0" />
+      <LineId Id="59" Count="0" />
+      <LineId Id="61" Count="0" />
+      <LineId Id="63" Count="0" />
+      <LineId Id="65" Count="0" />
+      <LineId Id="67" Count="0" />
+      <LineId Id="69" Count="0" />
+      <LineId Id="50" Count="0" />
+      <LineId Id="72" Count="0" />
+      <LineId Id="71" Count="0" />
+      <LineId Id="81" Count="0" />
+      <LineId Id="90" Count="0" />
+      <LineId Id="88" Count="0" />
+      <LineId Id="93" Count="0" />
+      <LineId Id="83" Count="0" />
+      <LineId Id="87" Count="0" />
+      <LineId Id="73" Count="0" />
+      <LineId Id="92" Count="0" />
+      <LineId Id="94" Count="1" />
+      <LineId Id="97" Count="6" />
+      <LineId Id="91" Count="0" />
+      <LineId Id="74" Count="0" />
+      <LineId Id="104" Count="0" />
+      <LineId Id="106" Count="2" />
+      <LineId Id="39" Count="0" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="118" Count="0" />
+      <LineId Id="31" Count="2" />
+      <LineId Id="36" Count="0" />
+      <LineId Id="34" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>
