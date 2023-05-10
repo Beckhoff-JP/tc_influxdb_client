@@ -25,19 +25,20 @@ VAR
 	nCycleTime		: UDINT;					// PLC task cycle time setting(in 100ns)
 	data_size		: UDINT := 1;				// record data size
 	data_count		: UDINT := 0;		// buffer usage
+	last_data_count	: UDINT := 0;
 	
 	start_index		: UDINT;
-	buffer_usage	: REAL;				// data usage percentage of data buffer.
+	_buffer_usage	: REAL;				// data usage percentage of data buffer.
+	_avalable_buffer_size	:DINT;
 	diff_target		: REAL;
-	pid_ope			: REAL;
-	buffer_usage_spec	: REAL := 0.01;
-	
+	pid_ope			: REAL;	
 	recording		: BOOL;
 	chunk_size : UDINT;
 	bContinue		: BOOL;
 	//insert_command_buffer	: ARRAY [0..QUEUE_SIZE] OF DbInsertCommand;
 	//BufferIndex			: ARRAY [0..QUEUE_SIZE] OF T_Arg;
 	insert_command_buffer: INT;
+	
 END_VAR
 
 VAR_OUTPUT
@@ -50,6 +51,25 @@ END_VAR]]></Declaration>
     <Implementation>
       <ST><![CDATA[]]></ST>
     </Implementation>
+    <Property Name="buffer_usage" Id="{bbb95211-74e1-4da1-9e2b-be2248fb01e5}">
+      <Declaration><![CDATA[PROPERTY PUBLIC buffer_usage : REAL]]></Declaration>
+      <Get Name="Get" Id="{b46d5d51-f7df-45ba-9aab-0d3c72cb9324}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[buffer_usage := _buffer_usage;]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{c88e0f39-ef98-4aac-999b-7b9e79aeaac6}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
     <Property Name="cycle_time" Id="{dd6efd39-1e93-4941-82d8-5c6febd1514f}">
       <Declaration><![CDATA[// Explicity specify cycle time.
 PROPERTY PUBLIC cycle_time : UDINT]]></Declaration>
@@ -74,6 +94,7 @@ END_VAR
       <Declaration><![CDATA[METHOD cyclic_record : BOOL
 VAR_INPUT
 END_VAR
+
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[IF current_index = start_index THEN
@@ -86,6 +107,13 @@ IF next_index <= current_index OR current_index >= nDataBufferMaxIndex THEN
 	// put_data
 	IF NOT command_queue.controller.full THEN
 		data_size := current_index - start_index + 1;
+		_avalable_buffer_size := UDINT_TO_DINT(nDataBufferMaxIndex) - UDINT_TO_DINT(data_count) +1;
+		IF _avalable_buffer_size < UDINT_TO_DINT(data_size) AND _avalable_buffer_size > 0 THEN
+			data_size := DINT_TO_UDINT(_avalable_buffer_size);
+		ELSIF _avalable_buffer_size <= 0 THEN
+			data_size := 0;
+		END_IF
+
 		IF data_size > 1 THEN
 
 			// put pointer
@@ -105,31 +133,36 @@ IF next_index <= current_index OR current_index >= nDataBufferMaxIndex THEN
 			command_queue.buffer_body[command_queue.current_index].SchemaName := sSchemaName;
 			command_queue.buffer_body[command_queue.current_index].ref_data_buffer_counter REF= data_count;
 			// queue in
-			IF  data_size <= (nDataBufferMaxIndex - data_count) THEN
-				command_queue.controller.put(
-					lData := F_BIGTYPE(
-						pData := ADR(command_queue.buffer_body[command_queue.current_index]), 
-						cbLen := SIZEOF(command_queue.buffer_body[command_queue.current_index])
-					)
-				);
-				data_count := data_count + command_queue.buffer_body[command_queue.current_index].chunk_size;
-				command_queue.current_index := command_queue.current_index + 1;
-				start_index := current_index + 1;
-			END_IF
+			command_queue.controller.put(
+				lData := F_BIGTYPE(
+					pData := ADR(command_queue.buffer_body[command_queue.current_index]), 
+					cbLen := SIZEOF(command_queue.buffer_body[command_queue.current_index])
+				)
+			);
+			data_count := data_count + command_queue.buffer_body[command_queue.current_index].chunk_size;
+			command_queue.current_index := command_queue.current_index + 1;
+			start_index := current_index + 1;
 		END_IF
 	END_IF
+END_IF
+
+
+IF last_data_count <> data_count THEN
 	// calculate next index
-	buffer_usage := UDINT_TO_REAL(data_count) / UDINT_TO_REAL(nDataBufferMaxIndex + 1);
-	diff_target := UDINT_TO_REAL(max_chunk_size) * (buffer_usage - buffer_usage_spec);
+	_buffer_usage := UDINT_TO_REAL(data_count) / UDINT_TO_REAL(nDataBufferMaxIndex + 1);
+	diff_target := UDINT_TO_REAL(max_chunk_size) * _buffer_usage;
 	pid_ope := UDINT_TO_REAL(min_chunk_size) + diff_target;
 	chunk_size := REAL_TO_UDINT(pid_ope);
-	IF chunk_size < min_chunk_size THEN
+	//chunk_size := minimum_chunk_size;
+	next_index := current_index + chunk_size - 1;
+	IF chunk_size < min_chunk_size OR pid_ope < 0 THEN
 		chunk_size := min_chunk_size;
 	ELSIF chunk_size > max_chunk_size THEN
 		chunk_size := max_chunk_size;
-	END_IF		
-	next_index := current_index + chunk_size;
+	END_IF
 END_IF
+
+last_data_count := data_count;
 
 IF current_index < nDataBufferMaxIndex THEN
 	current_index := current_index + 1;
@@ -137,7 +170,9 @@ ELSE
 	current_index := 0;
 	start_index := 0;
 	next_index := chunk_size - 1;
-END_IF]]></ST>
+END_IF
+
+]]></ST>
       </Implementation>
     </Method>
     <Property Name="data_def_structure_name" Id="{12d15a2c-bf0d-4db7-a907-7cebd338c4d6}">
@@ -319,6 +354,12 @@ END_VAR
     <LineIds Name="RecordDataQueue">
       <LineId Id="9" Count="0" />
     </LineIds>
+    <LineIds Name="RecordDataQueue.buffer_usage.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="RecordDataQueue.buffer_usage.Set">
+      <LineId Id="2" Count="0" />
+    </LineIds>
     <LineIds Name="RecordDataQueue.cycle_time.Get">
       <LineId Id="2" Count="0" />
     </LineIds>
@@ -330,7 +371,14 @@ END_VAR
       <LineId Id="147" Count="0" />
       <LineId Id="149" Count="0" />
       <LineId Id="34" Count="0" />
-      <LineId Id="81" Count="1" />
+      <LineId Id="81" Count="0" />
+      <LineId Id="166" Count="0" />
+      <LineId Id="160" Count="0" />
+      <LineId Id="162" Count="0" />
+      <LineId Id="164" Count="1" />
+      <LineId Id="163" Count="0" />
+      <LineId Id="161" Count="0" />
+      <LineId Id="82" Count="0" />
       <LineId Id="85" Count="0" />
       <LineId Id="88" Count="2" />
       <LineId Id="86" Count="0" />
@@ -339,22 +387,29 @@ END_VAR
       <LineId Id="74" Count="0" />
       <LineId Id="49" Count="6" />
       <LineId Id="78" Count="0" />
-      <LineId Id="56" Count="7" />
+      <LineId Id="56" Count="0" />
+      <LineId Id="58" Count="5" />
       <LineId Id="93" Count="0" />
       <LineId Id="95" Count="0" />
       <LineId Id="94" Count="0" />
-      <LineId Id="64" Count="0" />
       <LineId Id="84" Count="0" />
       <LineId Id="13" Count="0" />
-      <LineId Id="105" Count="1" />
-      <LineId Id="115" Count="0" />
-      <LineId Id="122" Count="0" />
-      <LineId Id="133" Count="0" />
-      <LineId Id="142" Count="1" />
-      <LineId Id="139" Count="2" />
-      <LineId Id="126" Count="0" />
-      <LineId Id="22" Count="7" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="177" Count="0" />
+      <LineId Id="205" Count="0" />
+      <LineId Id="189" Count="0" />
+      <LineId Id="211" Count="5" />
+      <LineId Id="206" Count="0" />
+      <LineId Id="219" Count="3" />
+      <LineId Id="218" Count="0" />
+      <LineId Id="207" Count="0" />
+      <LineId Id="217" Count="0" />
+      <LineId Id="204" Count="0" />
+      <LineId Id="23" Count="5" />
+      <LineId Id="197" Count="0" />
       <LineId Id="5" Count="0" />
+      <LineId Id="192" Count="0" />
+      <LineId Id="196" Count="0" />
     </LineIds>
     <LineIds Name="RecordDataQueue.data_def_structure_name.Get">
       <LineId Id="2" Count="0" />

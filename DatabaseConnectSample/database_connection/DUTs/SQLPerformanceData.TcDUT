@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="SQLPerformanceData" Id="{2d9610a5-1f39-4ebb-abc8-6b3ae75d363e}">
+    <Declaration><![CDATA[TYPE SQLPerformanceData :
+STRUCT
+	time_stamp: DT;
+	task_time: DINT;
+	cpu_usage: DINT;
+	latency: DINT;
+	max_latency: DINT;
+	exceed_counter: DINT;
+    db_insert_queue_count: DINT;
+    current_index: DINT;
+    next_index: DINT;
+	buffer_usage: REAL;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

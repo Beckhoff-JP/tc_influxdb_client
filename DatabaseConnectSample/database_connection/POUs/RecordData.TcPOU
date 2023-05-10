@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
-  <POU Name="RecordToInfluxDB" Id="{54c36bd4-1835-4b4c-be1e-05e28c01780d}" SpecialFunc="None">
+  <POU Name="RecordData" Id="{54c36bd4-1835-4b4c-be1e-05e28c01780d}" SpecialFunc="None">
     <Declaration><![CDATA[(*
 
 Record performance data to influxDB
@@ -29,10 +29,10 @@ History
 	  
 *)
 
-PROGRAM RecordToInfluxDB
+PROGRAM RecordData
 
 VAR CONSTANT
-	RECORD_DATA_MAX_INDEX: UDINT := 9999;
+	RECORD_DATA_MAX_INDEX: UDINT := 49999;
 	TARGET_DBID: UDINT := 1;
 END_VAR
 
@@ -61,21 +61,27 @@ VAR
 	
 	process_timer :TON; // Process time
 
+	// For SQL database
+	SQLPerformanceRecordDataBuffer	: ARRAY [0..RECORD_DATA_MAX_INDEX] OF SQLPerformanceData;
+	SQLPerformanceRecordData		: SQLPerformanceData;
+	fbGetSystemTime1				: GetSystemTime;
+	dwTimeLoDW: DWORD;
+	dwTimeHiDW: DWORD;
+	tFileTime: T_FILETIME;
+	nTimestamp: LINT;
+	
 	// Command insert queue
 	fbPerfromanceDataCommandBuffer		:RecordDataQueue;
 	fbThroughputDataCommandBuffer		:RecordDataQueue;
 	fbProcessModeBuffer					:RecordDataQueue;
-	
-	
-	// Cycle record data
-	fbInfluxDBRecorder	:RecordInfluxDB;
-	command_queue		: CommandQueueMember;
+	fbSQLPerfromanceDataBuffer			:RecordDataQueue;
 	
 END_VAR
 ]]></Declaration>
     <Implementation>
       <ST><![CDATA[// Create database command queue
-command_queue.controller(aData := command_queue.buffer_index);
+GVL.tsdb_command_queue.controller(aData := GVL.tsdb_command_queue.buffer_index);
+GVL.psql_command_queue.controller(aData := GVL.psql_command_queue.buffer_index);
 
 
 // Get ipc data.
@@ -83,9 +89,9 @@ fb_PLCTaskMeasurement(ec_master_netid := '169.254.55.71.4.1');
 
 
 // Add PLC calculation stress step by step.
-test_timer(IN := NOT test_timer.Q, PT := T#15M);
+test_timer(IN := NOT test_timer.Q, PT := T#5M);
 IF test_timer.Q THEN
-	target := target + 500;
+	target := target + 5000;
 END_IF
 
 // On processing
@@ -119,12 +125,54 @@ fbProcessModeBuffer.data_pointer := F_BIGTYPE(
 fbProcessModeBuffer.db_table_name := 'PerformanceData';
 fbProcessModeBuffer.data_def_structure_name := 'ProcessModeData';
 
-fbProcessModeBuffer(command_queue := command_queue);
+fbProcessModeBuffer(command_queue := GVL.tsdb_command_queue);
 
 
 IF process_timer.Q THEN
 	fbProcessModeBuffer.record_once();
 END_IF
+
+(* Performance Data SQL *)
+
+//Create timestamp
+fbGetSystemTime1(timeLoDW=>dwTimeLoDW,timeHiDW=>dwTimeHiDW);
+tFileTime.dwLowDateTime := dwTimeLoDW;
+tFileTime.dwHighDateTime := dwTimeHiDW;	
+MEMCPY(ADR(nTimestamp), ADR(tFileTime), 8);
+
+SQLPerformanceRecordData.time_stamp	:= FILETIME64_TO_DT( F_GetSystemTime() );
+SQLPerformanceRecordData.task_time := UDINT_TO_DINT(fb_PLCTaskMeasurement.total_task_time);
+SQLPerformanceRecordData.cpu_usage := UDINT_TO_DINT(fb_PLCTaskMeasurement.cpu_usage);
+SQLPerformanceRecordData.latency := UDINT_TO_DINT(fb_PLCTaskMeasurement.latency);
+SQLPerformanceRecordData.max_latency := UDINT_TO_DINT(fb_PLCTaskMeasurement.max_latency);
+SQLPerformanceRecordData.exceed_counter := UDINT_TO_DINT(fb_PLCTaskMeasurement.exceed_counter);
+SQLPerformanceRecordData.db_insert_queue_count := UDINT_TO_DINT(GVL.tsdb_command_queue.controller.num_of_data);
+SQLPerformanceRecordData.current_index := UDINT_TO_DINT(fbPerfromanceDataCommandBuffer.index);
+SQLPerformanceRecordData.next_index := UDINT_TO_DINT(fbPerfromanceDataCommandBuffer.next_index);
+SQLPerformanceRecordData.buffer_usage := fbPerfromanceDataCommandBuffer.buffer_usage;
+
+
+// Set data into specified address on data buffer array.
+SQLPerformanceRecordDataBuffer[fbSQLPerfromanceDataBuffer.index] := SQLPerformanceRecordData;
+
+// Change data to generic type (T_Arg) for insert queue.
+fbSQLPerfromanceDataBuffer.data_pointer := F_BIGTYPE(
+		pData := ADR(PerformanceDataRecordBuffer[fbPerfromanceDataCommandBuffer.index]), 
+		cbLen := SIZEOF(PerformanceDataRecordBuffer[fbPerfromanceDataCommandBuffer.index])
+	);
+
+// Insert command queue
+fbSQLPerfromanceDataBuffer.db_table_name := 'PerformanceData';
+fbSQLPerfromanceDataBuffer.data_def_structure_name := 'PerformanceData';
+fbSQLPerfromanceDataBuffer.minimum_chunk_size := 500;
+fbSQLPerfromanceDataBuffer.upper_bound_of_data_buffer	:= RECORD_DATA_MAX_INDEX;
+
+fbSQLPerfromanceDataBuffer(
+	command_queue := GVL.psql_command_queue
+);
+
+// cyclic record
+// fbSQLPerfromanceDataBuffer.cyclic_record();
 
 (* 
 	Performance Data
@@ -158,11 +206,11 @@ fbPerfromanceDataCommandBuffer.data_pointer := F_BIGTYPE(
 // Insert command queue
 fbPerfromanceDataCommandBuffer.db_table_name := 'PerformanceData';
 fbPerfromanceDataCommandBuffer.data_def_structure_name := 'PerformanceData';
-fbPerfromanceDataCommandBuffer.minimum_chunk_size := 100;
+fbPerfromanceDataCommandBuffer.minimum_chunk_size := 500;
 fbPerfromanceDataCommandBuffer.upper_bound_of_data_buffer	:= RECORD_DATA_MAX_INDEX;
 
 fbPerfromanceDataCommandBuffer(
-	command_queue := command_queue
+	command_queue := GVL.tsdb_command_queue
 );
 
 // cyclic record
@@ -179,9 +227,10 @@ fbPerfromanceDataCommandBuffer.cyclic_record();
 DatabaseThroughputRecordData.machine_id := 'machine-1';
 DatabaseThroughputRecordData.job_id := 'db_throughput';
 // Field data set
-DatabaseThroughputRecordData.db_insert_queue_count := command_queue.controller.num_of_data;
+DatabaseThroughputRecordData.db_insert_queue_count := GVL.tsdb_command_queue.controller.num_of_data;
 DatabaseThroughputRecordData.current_index := fbPerfromanceDataCommandBuffer.index;
 DatabaseThroughputRecordData.next_index := fbPerfromanceDataCommandBuffer.next_index;
+DatabaseThroughputRecordData.buffer_usage := fbPerfromanceDataCommandBuffer.buffer_usage;
 
 // Set data into specified address on data buffer array.
 DatabaseThroughputRecordBuffer[fbThroughputDataCommandBuffer.index] := DatabaseThroughputRecordData;
@@ -196,88 +245,24 @@ fbThroughputDataCommandBuffer.data_pointer := F_BIGTYPE(
 // Insert command queue
 fbThroughputDataCommandBuffer.db_table_name := 'DatabaseThroughput';
 fbThroughputDataCommandBuffer.data_def_structure_name := 'DatabaseThroughput';
-fbThroughputDataCommandBuffer.minimum_chunk_size := 100;
+fbThroughputDataCommandBuffer.minimum_chunk_size := 500;
 fbThroughputDataCommandBuffer.upper_bound_of_data_buffer	:= RECORD_DATA_MAX_INDEX;
 
 fbThroughputDataCommandBuffer(
-	command_queue := command_queue
+	command_queue := GVL.tsdb_command_queue
 ); //execute
 
 
 // cyclic record
 fbThroughputDataCommandBuffer.cyclic_record();
 
-// Insert DB
-fbInfluxDBRecorder(
-	command_queue := command_queue,
-	nDBID := 1,      // Database ID by TF6420 configurator
-);
 ]]></ST>
     </Implementation>
-    <LineIds Name="RecordToInfluxDB">
-      <LineId Id="3708" Count="1" />
-      <LineId Id="3706" Count="1" />
-      <LineId Id="3405" Count="23" />
-      <LineId Id="3787" Count="0" />
-      <LineId Id="3795" Count="1" />
-      <LineId Id="3788" Count="0" />
-      <LineId Id="3512" Count="0" />
-      <LineId Id="3786" Count="0" />
-      <LineId Id="3789" Count="0" />
-      <LineId Id="3792" Count="0" />
-      <LineId Id="3690" Count="3" />
-      <LineId Id="3687" Count="0" />
-      <LineId Id="3697" Count="0" />
-      <LineId Id="3694" Count="1" />
-      <LineId Id="3698" Count="0" />
-      <LineId Id="3688" Count="0" />
-      <LineId Id="3700" Count="0" />
-      <LineId Id="3713" Count="0" />
-      <LineId Id="3702" Count="0" />
-      <LineId Id="3712" Count="0" />
-      <LineId Id="3705" Count="0" />
-      <LineId Id="3516" Count="0" />
-      <LineId Id="3515" Count="0" />
-      <LineId Id="3600" Count="0" />
-      <LineId Id="3599" Count="0" />
-      <LineId Id="3601" Count="0" />
-      <LineId Id="3429" Count="2" />
-      <LineId Id="3794" Count="0" />
-      <LineId Id="3793" Count="0" />
-      <LineId Id="3432" Count="8" />
-      <LineId Id="3799" Count="2" />
-      <LineId Id="3443" Count="6" />
-      <LineId Id="3454" Count="5" />
-      <LineId Id="3673" Count="0" />
-      <LineId Id="3460" Count="0" />
-      <LineId Id="3523" Count="0" />
-      <LineId Id="3463" Count="0" />
-      <LineId Id="3674" Count="0" />
-      <LineId Id="3671" Count="1" />
-      <LineId Id="3602" Count="1" />
-      <LineId Id="3464" Count="4" />
-      <LineId Id="3503" Count="0" />
-      <LineId Id="3803" Count="0" />
-      <LineId Id="3504" Count="0" />
-      <LineId Id="3469" Count="0" />
-      <LineId Id="3804" Count="0" />
-      <LineId Id="3470" Count="2" />
-      <LineId Id="3805" Count="0" />
-      <LineId Id="3473" Count="3" />
-      <LineId Id="3802" Count="0" />
-      <LineId Id="3478" Count="3" />
-      <LineId Id="3486" Count="5" />
-      <LineId Id="3675" Count="0" />
-      <LineId Id="3492" Count="0" />
-      <LineId Id="3524" Count="0" />
-      <LineId Id="3495" Count="0" />
-      <LineId Id="3676" Count="1" />
-      <LineId Id="3679" Count="0" />
-      <LineId Id="3678" Count="0" />
-      <LineId Id="3510" Count="0" />
-      <LineId Id="3497" Count="1" />
-      <LineId Id="3525" Count="0" />
-      <LineId Id="3501" Count="1" />
+    <LineIds Name="RecordData">
+      <LineId Id="4074" Count="1" />
+      <LineId Id="4251" Count="0" />
+      <LineId Id="4250" Count="0" />
+      <LineId Id="4076" Count="172" />
       <LineId Id="1026" Count="0" />
     </LineIds>
   </POU>

@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <Itf Name="IRecordDB" Id="{1d7da905-9dbc-4a62-9363-d7eaf62f12d7}">
+    <Declaration><![CDATA[INTERFACE IRecordDB
+]]></Declaration>
+    <Property Name="query" Id="{0c693f22-a1e1-4998-bbc5-28f2eaaa08a9}">
+      <Declaration><![CDATA[PROPERTY query : string(512)]]></Declaration>
+      <Get Name="Get" Id="{769bd1ee-8ee2-4d6a-b905-0865d7739bb5}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+      <Set Name="Set" Id="{b5ea8c81-b164-4a8f-a1cc-84f0e1214dde}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Set>
+    </Property>
+  </Itf>
+</TcPlcObject>

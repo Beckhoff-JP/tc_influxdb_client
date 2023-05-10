@@ -5,7 +5,7 @@
     <CycleTime>1000</CycleTime>
     <Priority>20</Priority>
     <PouCall>
-      <Name>RecordToInfluxDB</Name>
+      <Name>RecordData</Name>
     </PouCall>
     <TaskFBGuid>{83a09e3f-618b-45a8-b787-e4bb5214b34e}</TaskFBGuid>
     <Fb_init>{777801b9-317b-432e-b06d-3d4c494e8d8f}</Fb_init>

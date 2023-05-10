@@ -18,7 +18,7 @@
     <Company>Beckhoff co. ltd.</Company>
     <Released>false</Released>
     <Title>influxdb-client</Title>
-    <ProjectVersion>1.0.0.1</ProjectVersion>
+    <ProjectVersion>1.0.0.2</ProjectVersion>
     <DefaultNamespace>bajp</DefaultNamespace>
     <DocFormat>reStructuredText</DocFormat>
     <LibraryCategories>
@@ -78,6 +78,9 @@
     <Author>Takashi Ichihashi</Author>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="DBTask.TcTTO">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="DUTs\DatabaseThroughput.TcDUT">
       <SubType>Code</SubType>
     </Compile>
@@ -99,11 +102,23 @@
     <Compile Include="DUTs\ProcessModeData.TcDUT">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="DUTs\SQLPerformanceData.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="GVLs\GVL.TcGVL">
       <SubType>Code</SubType>
       <LinkAlways>true</LinkAlways>
     </Compile>
+    <Compile Include="IRecordDB.TcIO">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="PlcTask.TcTTO">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\DbWriteInfluxDB.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\DbWriteSQL.TcPOU">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\PLCTaskMeasurement.TcPOU">
@@ -118,7 +133,10 @@
     <Compile Include="POUs\RecordInfluxDB.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\RecordToInfluxDB.TcPOU">
+    <Compile Include="POUs\RecordData.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\RecordSQL.TcPOU">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Project Information\F_GetCompany.TcPOU">
