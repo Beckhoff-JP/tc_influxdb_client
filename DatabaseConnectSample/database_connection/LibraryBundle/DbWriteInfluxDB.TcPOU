@@ -12,7 +12,7 @@ END_VAR
       <ST><![CDATA[// Insert DB
 fbInfluxDBRecorder(
 	command_queue := GVL.tsdb_command_queue,
-	nDBID := 2      // Database ID by TF6420 configurator
+	nDBID := 1      // Database ID by TF6420 configurator
 );
 ]]></ST>
     </Implementation>

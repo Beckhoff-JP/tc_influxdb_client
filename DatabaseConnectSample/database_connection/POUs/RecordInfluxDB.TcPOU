@@ -96,7 +96,9 @@ VAR_IN_OUT
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[CASE State OF
+      <ST><![CDATA[command_queue.controller(aData := command_queue.buffer_index);
+
+CASE State OF
 
 	E_DbLogState.idle:
 		
@@ -169,6 +171,7 @@ END_VAR
       </Set>
     </Property>
     <LineIds Name="RecordInfluxDB">
+      <LineId Id="2748" Count="1" />
       <LineId Id="2293" Count="10" />
       <LineId Id="2305" Count="1" />
       <LineId Id="2649" Count="0" />
