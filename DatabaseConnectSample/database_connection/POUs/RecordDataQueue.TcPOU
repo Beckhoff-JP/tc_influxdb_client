@@ -303,7 +303,9 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// put_data
+        <ST><![CDATA[data_size := 1;
+
+// put_data
 IF NOT command_queue.controller.full THEN
 	// put pointer
 	IF command_queue.current_index > command_queue.buffer_size THEN
@@ -449,6 +451,7 @@ END_VAR
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="RecordDataQueue.record_once">
+      <LineId Id="109" Count="1" />
       <LineId Id="38" Count="1" />
       <LineId Id="78" Count="3" />
       <LineId Id="93" Count="0" />

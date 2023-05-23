@@ -116,16 +116,18 @@ CASE State OF
 				get_data.ref_data_buffer_counter := get_data.ref_data_buffer_counter - get_data.chunk_size;
 			END_IF
 			// Data set
-			fbNoSQLQueryBuilder_TimeSeriesDB.pQueryOptions := ADR(QueryOption_TSDB_Insert);
-			fbNoSQLQueryBuilder_TimeSeriesDB.cbQueryOptions := SIZEOF(QueryOption_TSDB_Insert);    
-			QueryOption_TSDB_Insert.sTableName := get_data.MeasurementName;
-			QueryOption_TSDB_Insert.sDataType := get_data.SchemaName;
-			QueryOption_TSDB_Insert.pSymbol := get_data.data_body.pData;
-			QueryOption_TSDB_Insert.cbSymbol := get_data.data_body.cbLen * get_data.chunk_size;
-			QueryOption_TSDB_Insert.nDataCount := get_data.chunk_size;
-			QueryOption_TSDB_Insert.nStartTimestamp := get_data.start_time;
-			QueryOption_TSDB_Insert.nCycleTime := get_data.cycle_time_100ns; // (in 100 ns)
-			State := E_DbLogState.writing;
+			IF get_data.chunk_size > 0 THEN
+				fbNoSQLQueryBuilder_TimeSeriesDB.pQueryOptions := ADR(QueryOption_TSDB_Insert);
+				fbNoSQLQueryBuilder_TimeSeriesDB.cbQueryOptions := SIZEOF(QueryOption_TSDB_Insert);    
+				QueryOption_TSDB_Insert.sTableName := get_data.MeasurementName;
+				QueryOption_TSDB_Insert.sDataType := get_data.SchemaName;
+				QueryOption_TSDB_Insert.pSymbol := get_data.data_body.pData;
+				QueryOption_TSDB_Insert.cbSymbol := get_data.data_body.cbLen * get_data.chunk_size;
+				QueryOption_TSDB_Insert.nDataCount := get_data.chunk_size;
+				QueryOption_TSDB_Insert.nStartTimestamp := get_data.start_time;
+				QueryOption_TSDB_Insert.nCycleTime := get_data.cycle_time_100ns; // (in 100 ns)
+				State := E_DbLogState.writing;
+			END_IF
 		
 		END_IF
 
@@ -136,7 +138,7 @@ CASE State OF
 				TcResult := fbNoSqlQueryEvt.ipTcResult;                
 				State := E_DbLogState.error;
 			ELSE		
-				State := E_DbLogState.init;
+				State := E_DbLogState.idle;
 				bError := FALSE;
 			END_IF
 		END_IF
@@ -177,7 +179,11 @@ END_VAR
       <LineId Id="2649" Count="0" />
       <LineId Id="2653" Count="1" />
       <LineId Id="2652" Count="0" />
-      <LineId Id="2308" Count="33" />
+      <LineId Id="2308" Count="0" />
+      <LineId Id="2843" Count="0" />
+      <LineId Id="2846" Count="9" />
+      <LineId Id="2845" Count="0" />
+      <LineId Id="2319" Count="22" />
       <LineId Id="9" Count="0" />
     </LineIds>
     <LineIds Name="RecordInfluxDB.query.Get">
