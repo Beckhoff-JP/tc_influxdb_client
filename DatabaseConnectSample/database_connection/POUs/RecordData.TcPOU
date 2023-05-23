@@ -79,12 +79,7 @@ VAR
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[// Create database command queue
-GVL.tsdb_command_queue.controller(aData := GVL.tsdb_command_queue.buffer_index);
-GVL.psql_command_queue.controller(aData := GVL.psql_command_queue.buffer_index);
-
-
-// Get ipc data.
+      <ST><![CDATA[// Get ipc data.
 fb_PLCTaskMeasurement(ec_master_netid := '169.254.55.71.4.1');
 
 
@@ -109,29 +104,16 @@ IF fb_PLCTaskMeasurement.cpu_usage > 30 THEN
 	target := 500;
 END_IF
 
-// Tag Data set
-DataBaseProcessModeRecordData.machine_id := 'machine-1';
-DataBaseProcessModeRecordData.job_id := 'task_info';
-// Field data set
-DataBaseProcessModeRecordData.executing := bExecuting;
-DataBaseProcessModeRecordData.message := Tc2_Standard.CONCAT('LOOP COUNT: ',UDINT_TO_STRING(target));
+// Database Writing actions
 
-// Change data to generic type (T_Arg) for insert queue.
-fbProcessModeBuffer.data_pointer := F_BIGTYPE(
-		pData := ADR(DataBaseProcessModeRecordData), 
-		cbLen := SIZEOF(DataBaseProcessModeRecordData)
-	);
-
-fbProcessModeBuffer.db_table_name := 'PerformanceData';
-fbProcessModeBuffer.data_def_structure_name := 'ProcessModeData';
-
-fbProcessModeBuffer(command_queue := GVL.tsdb_command_queue);
-
-
-IF process_timer.Q THEN
-	fbProcessModeBuffer.record_once();
-END_IF
-
+ts_database_metrics();
+ts_performance_data();
+ts_process_mode();
+//SQL_metrics();]]></ST>
+    </Implementation>
+    <Action Name="SQL_metrics" Id="{b99fd694-c474-4d49-992a-91e656a6ef72}">
+      <Implementation>
+        <ST><![CDATA[
 (* Performance Data SQL *)
 
 //Create timestamp
@@ -167,14 +149,55 @@ fbSQLPerfromanceDataBuffer.data_def_structure_name := 'PerformanceData';
 fbSQLPerfromanceDataBuffer.minimum_chunk_size := 500;
 fbSQLPerfromanceDataBuffer.upper_bound_of_data_buffer	:= RECORD_DATA_MAX_INDEX;
 
-fbSQLPerfromanceDataBuffer(
-	command_queue := GVL.psql_command_queue
-);
+fbSQLPerfromanceDataBuffer(command_queue := GVL.psql_command_queue);
 
 // cyclic record
 // fbSQLPerfromanceDataBuffer.cyclic_record();
+]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="ts_database_metrics" Id="{8cc304ee-f7f2-4ae7-91a1-48a016e700b9}">
+      <Implementation>
+        <ST><![CDATA[(*
+	Database Throughput data insert buffer
+*)
 
-(* 
+
+// Tag Data set
+DatabaseThroughputRecordData.machine_id := 'machine-1';
+DatabaseThroughputRecordData.job_id := 'db_throughput';
+// Field data set
+DatabaseThroughputRecordData.db_insert_queue_count := GVL.tsdb_command_queue.controller.num_of_data;
+DatabaseThroughputRecordData.current_index := fbPerfromanceDataCommandBuffer.index;
+DatabaseThroughputRecordData.next_index := fbPerfromanceDataCommandBuffer.next_index;
+DatabaseThroughputRecordData.buffer_usage := fbPerfromanceDataCommandBuffer.buffer_usage;
+
+// Set data into specified address on data buffer array.
+DatabaseThroughputRecordBuffer[fbThroughputDataCommandBuffer.index] := DatabaseThroughputRecordData;
+
+
+// Change data to generic type (T_Arg) for insert queue.
+fbThroughputDataCommandBuffer.data_pointer := F_BIGTYPE(
+		pData := ADR(DatabaseThroughputRecordBuffer[fbThroughputDataCommandBuffer.index]), 
+		cbLen := SIZEOF(DatabaseThroughputRecordBuffer[fbThroughputDataCommandBuffer.index])
+	);
+
+// Insert command queue
+fbThroughputDataCommandBuffer.db_table_name := 'DatabaseThroughput';
+fbThroughputDataCommandBuffer.data_def_structure_name := 'DatabaseThroughput';
+fbThroughputDataCommandBuffer.minimum_chunk_size := 500;
+fbThroughputDataCommandBuffer.upper_bound_of_data_buffer	:= RECORD_DATA_MAX_INDEX;
+
+fbThroughputDataCommandBuffer(command_queue := GVL.tsdb_command_queue); //execute
+
+
+// cyclic record
+fbThroughputDataCommandBuffer.cyclic_record();]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="ts_performance_data" Id="{2e87edb9-4bdf-469c-8ce0-302b04ccdde4}">
+      <Implementation>
+        <ST><![CDATA[(* 
 	Performance Data
 *)
 
@@ -209,61 +232,63 @@ fbPerfromanceDataCommandBuffer.data_def_structure_name := 'PerformanceData';
 fbPerfromanceDataCommandBuffer.minimum_chunk_size := 500;
 fbPerfromanceDataCommandBuffer.upper_bound_of_data_buffer	:= RECORD_DATA_MAX_INDEX;
 
-fbPerfromanceDataCommandBuffer(
-	command_queue := GVL.tsdb_command_queue
-);
+fbPerfromanceDataCommandBuffer(command_queue := GVL.tsdb_command_queue);
 
 // cyclic record
-fbPerfromanceDataCommandBuffer.cyclic_record();
-
-
-
-(*
-	Database Throughput data insert buffer
-*)
-
-
+fbPerfromanceDataCommandBuffer.cyclic_record();]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="ts_process_mode" Id="{daa9f062-06e6-4077-b528-c0735d8c4a4a}">
+      <Implementation>
+        <ST><![CDATA[
 // Tag Data set
-DatabaseThroughputRecordData.machine_id := 'machine-1';
-DatabaseThroughputRecordData.job_id := 'db_throughput';
+DataBaseProcessModeRecordData.machine_id := 'machine-1';
+DataBaseProcessModeRecordData.job_id := 'task_info';
 // Field data set
-DatabaseThroughputRecordData.db_insert_queue_count := GVL.tsdb_command_queue.controller.num_of_data;
-DatabaseThroughputRecordData.current_index := fbPerfromanceDataCommandBuffer.index;
-DatabaseThroughputRecordData.next_index := fbPerfromanceDataCommandBuffer.next_index;
-DatabaseThroughputRecordData.buffer_usage := fbPerfromanceDataCommandBuffer.buffer_usage;
-
-// Set data into specified address on data buffer array.
-DatabaseThroughputRecordBuffer[fbThroughputDataCommandBuffer.index] := DatabaseThroughputRecordData;
-
+DataBaseProcessModeRecordData.executing := bExecuting;
+DataBaseProcessModeRecordData.message := Tc2_Standard.CONCAT('LOOP COUNT: ',UDINT_TO_STRING(target));
 
 // Change data to generic type (T_Arg) for insert queue.
-fbThroughputDataCommandBuffer.data_pointer := F_BIGTYPE(
-		pData := ADR(DatabaseThroughputRecordBuffer[fbThroughputDataCommandBuffer.index]), 
-		cbLen := SIZEOF(DatabaseThroughputRecordBuffer[fbThroughputDataCommandBuffer.index])
+fbProcessModeBuffer.data_pointer := F_BIGTYPE(
+		pData := ADR(DataBaseProcessModeRecordData), 
+		cbLen := SIZEOF(DataBaseProcessModeRecordData)
 	);
 
-// Insert command queue
-fbThroughputDataCommandBuffer.db_table_name := 'DatabaseThroughput';
-fbThroughputDataCommandBuffer.data_def_structure_name := 'DatabaseThroughput';
-fbThroughputDataCommandBuffer.minimum_chunk_size := 500;
-fbThroughputDataCommandBuffer.upper_bound_of_data_buffer	:= RECORD_DATA_MAX_INDEX;
+fbProcessModeBuffer.db_table_name := 'PerformanceData';
+fbProcessModeBuffer.data_def_structure_name := 'ProcessModeData';
 
-fbThroughputDataCommandBuffer(
-	command_queue := GVL.tsdb_command_queue
-); //execute
+fbProcessModeBuffer(command_queue := GVL.tsdb_command_queue);
 
 
-// cyclic record
-fbThroughputDataCommandBuffer.cyclic_record();
-
+IF process_timer.Q THEN
+	fbProcessModeBuffer.record_once();
+END_IF
 ]]></ST>
-    </Implementation>
+      </Implementation>
+    </Action>
     <LineIds Name="RecordData">
-      <LineId Id="4074" Count="1" />
-      <LineId Id="4251" Count="0" />
-      <LineId Id="4250" Count="0" />
-      <LineId Id="4076" Count="172" />
+      <LineId Id="4077" Count="23" />
+      <LineId Id="4336" Count="0" />
+      <LineId Id="4338" Count="0" />
+      <LineId Id="4332" Count="0" />
       <LineId Id="1026" Count="0" />
+      <LineId Id="4333" Count="2" />
+    </LineIds>
+    <LineIds Name="RecordData.SQL_metrics">
+      <LineId Id="2" Count="39" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="RecordData.ts_database_metrics">
+      <LineId Id="2" Count="33" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="RecordData.ts_performance_data">
+      <LineId Id="2" Count="37" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="RecordData.ts_process_mode">
+      <LineId Id="2" Count="22" />
+      <LineId Id="1" Count="0" />
     </LineIds>
   </POU>
 </TcPlcObject>
