@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<TcSmProject xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.beckhoff.com/schemas/2012/07/TcSmProject" TcSmVersion="1.0" TcVersion="3.1.4024.44">
+<TcSmProject xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.beckhoff.com/schemas/2012/07/TcSmProject" TcSmVersion="1.0" TcVersion="3.1.4024.53">
 	<DataTypes>
 		<DataType>
 			<Name GUID="{F70FA843-B5F8-4BD2-AD5A-C0F5F1C816CD}" PersistentType="true">NewTestEventClass</Name>
@@ -20,7 +20,7 @@
 				<Cpu CpuId="2"/>
 				<Cpu CpuId="3"/>
 			</Settings>
-			<Licenses CacheOrCheckLicensesOnStartup="true">
+			<Licenses>
 				<Target BkhfOrder="0110012393" CustomOrder="BAJP">
 					<ManualSelect>{5BE000FB-98CE-4B83-A754-2CB323710E14}</ManualSelect>
 					<ManualSelect>{0070B910-0995-4F44-83BF-D1E141B4D8C3}</ManualSelect>
@@ -40,17 +40,6 @@
 					<ManualSelect>{7371CC89-F21A-4584-994B-8B112F6EB1A0}</ManualSelect>
 					<ManualSelect>{3DDCAB25-BF0E-412C-A721-DC77C1B8099C}</ManualSelect>
 					<ManualSelect>{BB7AE665-A8D6-41F6-954F-961DDDCDA42B}</ManualSelect>
-					<TargetSelect TargetId="2">{5BE000FB-98CE-4B83-A754-2CB323710E14}</TargetSelect>
-					<TargetSelect TargetId="2">{BB40055B-8333-4223-90EA-7C4559DC7C69}</TargetSelect>
-					<TargetSelect TargetId="2">{0070B910-0995-4F44-83BF-D1E141B4D8C3}</TargetSelect>
-					<TargetSelect TargetId="2">{927A7313-A412-4376-8911-4A8F60EC8651}</TargetSelect>
-					<TargetSelect TargetId="2">{067D1C29-F119-431C-A681-E503451951C7}</TargetSelect>
-					<TargetSelect TargetId="2">{02AC2825-C3C7-4D15-AAF6-4EB45EFAA2D0}</TargetSelect>
-					<TargetSelect TargetId="2">{D06E108C-0E3C-48D7-A589-8961B3FC9AC0}</TargetSelect>
-					<TargetSelect TargetId="2">{92583661-35AE-45CE-BD4F-C35BFE16F07E}</TargetSelect>
-					<TargetSelect TargetId="2">{EE499E71-9522-4C05-86B4-8AD0F904E0C4}</TargetSelect>
-					<TargetSelect TargetId="2">{133B41A5-2827-4423-8FEB-78AF4E0C890F}</TargetSelect>
-					<LicenseDevice DongleHardwareId="2" DongleDevice="#x71010001" DongleLevel="60" DongleSystemId="{086C9947-8F4A-1928-6071-BFB23933ABD0}"/>
 				</Target>
 			</Licenses>
 			<Tasks>
@@ -64,12 +53,12 @@
 		</System>
 		<Plc>
 			<Project GUID="{8299BEB1-A589-4E10-8266-1D808687532A}" Name="database_connection" PrjFilePath="database_connection\database_connection.plcproj" TmcFilePath="database_connection\database_connection.tmc" ReloadTmc="true" AmsPort="851" FileArchiveSettings="#x000e" SymbolicMapping="true">
-				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="1" TmcPath="database_connection\database_connection.tmc" TmcHash="{24521629-FB0C-2204-C24D-E3C00046EC67}">
+				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="1" TmcPath="database_connection\database_connection.tmc" TmcHash="{70248876-FD34-7F36-D1CD-EE8B23A50E40}">
 					<Name>database_connection Instance</Name>
 					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
 					<Contexts>
 						<Context>
-							<Id NeedCalleeCall="true">0</Id>
+							<Id>0</Id>
 							<Name>DBTask</Name>
 							<ManualConfig>
 								<OTCID>#x02010040</OTCID>
@@ -78,7 +67,7 @@
 							<CycleTime>10000000</CycleTime>
 						</Context>
 						<Context>
-							<Id NeedCalleeCall="true">1</Id>
+							<Id>1</Id>
 							<Name>PlcTask</Name>
 							<ManualConfig>
 								<OTCID>#x02010030</OTCID>

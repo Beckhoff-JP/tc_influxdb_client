@@ -3,9 +3,9 @@
   <DUT Name="CommandQueueMember" Id="{ada4b084-8055-402d-8a7c-f4c1b53b3463}">
     <Declaration><![CDATA[TYPE CommandQueueMember :
 STRUCT
-	buffer_size				: UDINT := GVL.COMMAND_BUFFER_SIZE;
-	buffer_body				: ARRAY [0..GVL.COMMAND_BUFFER_SIZE] OF DbInsertCommand;
-	buffer_index			: ARRAY [0..GVL.COMMAND_BUFFER_SIZE] OF T_Arg;
+	buffer_size				: UDINT := LibraryParameter.COMMAND_BUFFER_SIZE;
+	buffer_body				: ARRAY [0..LibraryParameter.COMMAND_BUFFER_SIZE] OF DbInsertCommand;
+	buffer_index			: ARRAY [0..LibraryParameter.COMMAND_BUFFER_SIZE] OF T_Arg;
 	current_index			: UDINT;
 	controller				: dequeue;
 END_STRUCT

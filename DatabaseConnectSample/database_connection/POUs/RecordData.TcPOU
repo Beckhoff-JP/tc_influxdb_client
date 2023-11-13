@@ -144,12 +144,14 @@ fbSQLPerfromanceDataBuffer.data_pointer := F_BIGTYPE(
 	);
 
 // Insert command queue
+
 fbSQLPerfromanceDataBuffer.db_table_name := 'PerformanceData';
 fbSQLPerfromanceDataBuffer.data_def_structure_name := 'PerformanceData';
 fbSQLPerfromanceDataBuffer.minimum_chunk_size := 500;
 fbSQLPerfromanceDataBuffer.upper_bound_of_data_buffer	:= RECORD_DATA_MAX_INDEX;
 
-fbSQLPerfromanceDataBuffer(command_queue := GVL.psql_command_queue);
+//fbSQLPerfromanceDataBuffer(command_queue := GVL.psql_command_queue);
+
 
 // cyclic record
 // fbSQLPerfromanceDataBuffer.cyclic_record();
@@ -275,7 +277,11 @@ END_IF
       <LineId Id="4333" Count="2" />
     </LineIds>
     <LineIds Name="RecordData.SQL_metrics">
-      <LineId Id="2" Count="39" />
+      <LineId Id="2" Count="30" />
+      <LineId Id="42" Count="0" />
+      <LineId Id="33" Count="5" />
+      <LineId Id="45" Count="0" />
+      <LineId Id="39" Count="2" />
       <LineId Id="1" Count="0" />
     </LineIds>
     <LineIds Name="RecordData.ts_database_metrics">

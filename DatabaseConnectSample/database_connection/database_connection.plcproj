@@ -18,7 +18,7 @@
     <Company>Beckhoff co. ltd.</Company>
     <Released>false</Released>
     <Title>influxdb-client</Title>
-    <ProjectVersion>1.0.0.3</ProjectVersion>
+    <ProjectVersion>1.0.0.4</ProjectVersion>
     <DefaultNamespace>bajp</DefaultNamespace>
     <DocFormat>reStructuredText</DocFormat>
     <LibraryCategories>
@@ -106,6 +106,10 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="GVLs\GVL.TcGVL">
+      <SubType>Code</SubType>
+      <LinkAlways>true</LinkAlways>
+    </Compile>
+    <Compile Include="GVLs\LibraryParameter.TcGVL">
       <SubType>Code</SubType>
       <LinkAlways>true</LinkAlways>
     </Compile>
