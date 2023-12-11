@@ -98,15 +98,11 @@ VAR
 	get_data_t 			: T_Arg;
 	get_data 			: DbInsertCommand;
 	State				: E_DbLogState;
-END_VAR
-
-VAR_IN_OUT
-	command_queue		: CommandQueueMember;
+	_queue : dequeue;
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[command_queue.controller(aData := command_queue.buffer_index);
-
+      <ST><![CDATA[
 CASE State OF
 
 	E_DbLogState.idle:
@@ -117,15 +113,10 @@ CASE State OF
 
 	E_DbLogState.init:
 	
-		IF NOT fbPLCDBCmd.bBusy AND command_queue.controller.num_of_data > 0 THEN
+		IF NOT fbPLCDBCmd.bBusy AND _queue.queue_usage > 0 THEN
 			// getting data
-			get_data_t := command_queue.controller.get();
-			MEMCPY(ADR(get_data), get_data_t.pData, get_data_t.cbLen);
-			IF __ISVALIDREF( get_data.ref_data_buffer_counter) THEN
-				get_data.ref_data_buffer_counter := get_data.ref_data_buffer_counter - get_data.chunk_size;
-			END_IF
-			State := E_DbLogState.writing;
-		
+			get_data := _queue.get();
+			State := E_DbLogState.writing;		
 		END_IF
 
 	E_DbLogState.writing:
@@ -174,14 +165,34 @@ END_VAR
         </Implementation>
       </Set>
     </Property>
+    <Property Name="queue" Id="{783f7123-f13b-436b-999f-bb0882697016}">
+      <Declaration><![CDATA[{warning 'add property implementation'}
+PROPERTY queue : REFERENCE TO dequeue
+]]></Declaration>
+      <Get Name="Get" Id="{3aa55314-d948-4540-a239-89938f2bca68}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[queue REF= _queue;]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{5f8801a8-0e9c-4465-a8c8-048a23cf83b3}">
+        <Declaration><![CDATA[
+VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[_queue := queue;]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
     <LineIds Name="RecordSQL">
-      <LineId Id="3143" Count="1" />
+      <LineId Id="3144" Count="0" />
       <LineId Id="2293" Count="10" />
       <LineId Id="2305" Count="1" />
-      <LineId Id="2649" Count="0" />
-      <LineId Id="2653" Count="1" />
-      <LineId Id="2652" Count="0" />
-      <LineId Id="2318" Count="4" />
+      <LineId Id="3249" Count="0" />
+      <LineId Id="2320" Count="2" />
       <LineId Id="2889" Count="0" />
       <LineId Id="2891" Count="0" />
       <LineId Id="3035" Count="5" />
@@ -198,6 +209,12 @@ END_VAR
       <LineId Id="2" Count="0" />
     </LineIds>
     <LineIds Name="RecordSQL.query.Set">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="RecordSQL.queue.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="RecordSQL.queue.Set">
       <LineId Id="2" Count="0" />
     </LineIds>
   </POU>

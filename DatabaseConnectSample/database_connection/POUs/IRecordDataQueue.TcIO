@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <Itf Name="IRecordDataQueue" Id="{31172c77-633a-46d5-b927-3b44dc9446a9}">
+    <Declaration><![CDATA[INTERFACE IRecordDataQueue
+]]></Declaration>
+    <Method Name="write" Id="{b7310110-45a3-4bf4-930d-2690f31ed7d1}">
+      <Declaration><![CDATA[METHOD write : BOOL
+VAR_INPUT
+	input_data	:T_Arg;
+END_VAR
+]]></Declaration>
+    </Method>
+  </Itf>
+</TcPlcObject>

@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<Database>
+  <ID>1</ID>
+  <Name>DB</Name>
+  <ServerName>http://127.0.0.1:8086/</ServerName>
+  <DatabaseName>machine_monitoring</DatabaseName>
+  <TableName />
+  <Authentication>True</Authentication>
+  <UserID>admin</UserID>
+  <Password>2rqvXunP/YaDvLWi15AVWQ==</Password>
+  <Driver />
+  <Provider />
+  <Port>0</Port>
+  <Protocol />
+  <Scheme>beckhoff.co.jp</Scheme>
+  <Sequence />
+  <SystemDB />
+  <FireBird_ClientDLLPath />
+  <OLDASCIIFormat>False</OLDASCIIFormat>
+  <ASCIISeparator />
+  <DBValueType>NONE</DBValueType>
+  <DBType>InfluxDb2</DBType>
+  <OdbcSubType>Unknown</OdbcSubType>
+  <DriverType>Unknown</DriverType>
+  <Temporary>False</Temporary>
+  <Disabled>False</Disabled>
+  <Description />
+  <FailOverDBID>0</FailOverDBID>
+  <AdditionalParameter />
+  <AuthenticationMechanism>UserNamePassword</AuthenticationMechanism>
+  <SslCa />
+  <SslCertificateFilePath />
+  <SslCertificatePassword />
+  <Token />
+  <ConnectionStringType />
+</Database>

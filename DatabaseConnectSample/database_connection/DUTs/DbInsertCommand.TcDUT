@@ -14,7 +14,7 @@ STRUCT
 	chunk_size			: UDINT; // Number of series record data.
 	cycle_time_100ns	: UDINT; // Recording interval time (in 100ns)
 	start_time			: ULINT; // Time of head record.
-	ref_data_buffer_counter	: REFERENCE TO UDINT;
+	accumulated_amount	: REFERENCE TO UDINT;
 END_STRUCT
 END_TYPE
 ]]></Declaration>

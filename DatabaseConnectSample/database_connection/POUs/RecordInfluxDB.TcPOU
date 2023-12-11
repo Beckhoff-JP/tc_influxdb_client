@@ -2,78 +2,24 @@
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
   <POU Name="RecordInfluxDB" Id="{8024213b-1b7f-44f6-b63f-23d9e46d68db}" SpecialFunc="None">
     <Declaration><![CDATA[(*
+Insert dedicated driver for InfluxDB.
+
 :Author: 
 
-	Takashi Ichihashi Beckhoff Automation co. ltd.
+	Takashi Ichihashi Beckhoff Automation K.K.
 	
 :Date:
 
 	2023-03-09
 	
-Overview
-==================
+This function block is based on sample code published on infosys sites. 
+Link:  `https://infosys.beckhoff.com/content/1033/tf6420_tc3_database_server/8117583755.html?id=5199556541044360835 <https://infosys.beckhoff.com/content/1033/tf6420_tc3_database_server/8117583755.html?id=5199556541044360835>`
 
-
-
-Infosys Link:  `https://infosys.beckhoff.com/content/1033/tf6420_tc3_database_server/8117583755.html?id=5199556541044360835 <https://infosys.beckhoff.com/content/1033/tf6420_tc3_database_server/8117583755.html?id=5199556541044360835>`
-
-Quick start
-======================
-
-As first you have to deine data model that the sampling data to insert to influxDB measurement.  The data models are structured by parent and child that is corresponding data tags and fields on influxDB.
-
-.. code:: DataTag structure
-
-	TYPE DataTag:
-	STRUCT
-		{attribute 'TagName' := 'machine_id'}
-		machine_id : STRING(255); // 設備名
-		{attribute 'TagName' := 'data_type_id'}
-		data_type_id : STRING(255); // 発生イベント種別
-	END_STRUCT
-	END_TYPE	
-
-	
-.. code:: DataField structure
-
-	TYPE PerformanceData EXTENDS DataTag:
-	STRUCT
-		{attribute 'FieldName' := 'plc_task_time'}
-		task_time: UDINT;
-		{attribute 'FieldName' := 'cpu_usage'}
-		cpu_usage: UDINT;
-		{attribute 'FieldName' := 'latency'}
-		latency: UDINT;
-		{attribute 'FieldName' := 'max_latency'}
-		max_latency: UDINT;
-		{attribute 'FieldName' := 'exceed_counter'}
-		exceed_counter: UDINT;
-		{attribute 'FieldName' := 'ec_lost_frames'}
-		ec_lost_frames: UDINT;
-		{attribute 'FieldName' := 'ec_frame_rate'}
-		ec_frame_rate: LREAL;
-		{attribute 'FieldName' := 'ec_lost_q_frame'}
-		ec_lost_q_frames: UDINT;
-		{attribute 'FieldName' := 'ec_q_frame_rate'}
-		ec_q_frame_rate: LREAL;
-		{attribute 'FieldName' := 'executing'}
-		executing: BOOL;
-		{attribute 'FieldName' := 'DB_queue_count'}
-		db_insert_queue_count: UDINT;
-		{attribute 'FieldName' := 'DB_buffer_current_index'}
-		current_index: UDINT;
-		{attribute 'FieldName' := 'DB_buffer_next_index'}
-		next_index: UDINT;
-	
-	END_STRUCT
-	END_TYPE
 	
 *)
 
 FUNCTION_BLOCK RecordInfluxDB IMPLEMENTS IRecordDB
-VAR_INPUT
-	nDBID						: UDINT;					// Database ID for TF6420
-END_VAR
+
 VAR_OUTPUT
 	bBusy			: BOOL;	// In writing database
 	bError			: BOOL; // Somthing wrong situation happend
@@ -86,18 +32,14 @@ VAR
     fbNoSqlQueryEvt 					: FB_NoSQLQueryEvt(sNetID := '', tTimeout := T#15S); // functionblock to execute queries
 	
 	// Variables for queue feature
-	get_data_t 			: T_Arg;
 	get_data 			: DbInsertCommand;
 	State				: E_DbLogState;
-END_VAR
-
-VAR_IN_OUT
-	command_queue		: CommandQueueMember;
+	nDBID				: UDINT;
+	_queue : dequeue;	
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[command_queue.controller(aData := command_queue.buffer_index);
-
+      <ST><![CDATA[
 CASE State OF
 
 	E_DbLogState.idle:
@@ -108,13 +50,9 @@ CASE State OF
 
 	E_DbLogState.init:
 	
-		IF NOT fbNoSqlQueryEvt.bBusy AND command_queue.controller.num_of_data > 0 THEN
+		IF NOT fbNoSqlQueryEvt.bBusy AND _queue.queue_usage > 0 THEN
 			// getting data
-			get_data_t := command_queue.controller.get();
-			MEMCPY(ADR(get_data), get_data_t.pData, get_data_t.cbLen);
-			IF __ISVALIDREF( get_data.ref_data_buffer_counter) THEN
-				get_data.ref_data_buffer_counter := get_data.ref_data_buffer_counter - get_data.chunk_size;
-			END_IF
+			get_data := _queue.get();
 			// Data set
 			IF get_data.chunk_size > 0 THEN
 				fbNoSQLQueryBuilder_TimeSeriesDB.pQueryOptions := ADR(QueryOption_TSDB_Insert);
@@ -133,7 +71,7 @@ CASE State OF
 
 	E_DbLogState.writing:
 	
-		IF fbNoSqlQueryEvt.Execute(nDBID, fbNoSQLQueryBuilder_TimeSeriesDB) THEN
+		IF fbNoSqlQueryEvt.Execute(1, fbNoSQLQueryBuilder_TimeSeriesDB) THEN
 			IF fbNoSqlQueryEvt.bError THEN
 				TcResult := fbNoSqlQueryEvt.ipTcResult;                
 				State := E_DbLogState.error;
@@ -153,6 +91,18 @@ CASE State OF
 END_CASE
 ]]></ST>
     </Implementation>
+    <Method Name="FB_init" Id="{905bd65a-b44d-4455-a9bf-7151bf36bcf4}">
+      <Declaration><![CDATA[METHOD FB_init : BOOL
+VAR_INPUT
+	bInitRetains : BOOL; // if TRUE, the retain variables are initialized (warm start / cold start)
+	bInCopyCode : BOOL;  // if TRUE, the instance afterwards gets moved into the copy code (online change)
+	DBID			:UDINT; // Database ID for TF6420
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[nDBID := DBID;]]></ST>
+      </Implementation>
+    </Method>
     <Property Name="query" Id="{7e57657a-d85c-4631-883e-c305de006ca2}">
       <Declaration><![CDATA[PROPERTY query : STRING(512)]]></Declaration>
       <Get Name="Get" Id="{4fd43ba5-1758-4a54-88af-ba966b369766}">
@@ -172,13 +122,33 @@ END_VAR
         </Implementation>
       </Set>
     </Property>
+    <Property Name="queue" Id="{9e0e16f0-3d31-4150-b701-80b92abe9211}">
+      <Declaration><![CDATA[(*Property of database command queue*)
+{warning 'add property implementation'}
+PROPERTY queue : REFERENCE TO dequeue
+]]></Declaration>
+      <Get Name="Get" Id="{67bb3399-7d3e-42aa-a50d-532cc78f00af}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[queue REF= _queue;]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{ef2eb95e-01f5-40e3-b3c1-f5f9552f7029}">
+        <Declaration><![CDATA[
+VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[_queue := queue;]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
     <LineIds Name="RecordInfluxDB">
-      <LineId Id="2748" Count="1" />
+      <LineId Id="2749" Count="0" />
       <LineId Id="2293" Count="10" />
       <LineId Id="2305" Count="1" />
-      <LineId Id="2649" Count="0" />
-      <LineId Id="2653" Count="1" />
-      <LineId Id="2652" Count="0" />
       <LineId Id="2308" Count="0" />
       <LineId Id="2843" Count="0" />
       <LineId Id="2846" Count="9" />
@@ -186,10 +156,19 @@ END_VAR
       <LineId Id="2319" Count="22" />
       <LineId Id="9" Count="0" />
     </LineIds>
+    <LineIds Name="RecordInfluxDB.FB_init">
+      <LineId Id="7" Count="0" />
+    </LineIds>
     <LineIds Name="RecordInfluxDB.query.Get">
       <LineId Id="2" Count="0" />
     </LineIds>
     <LineIds Name="RecordInfluxDB.query.Set">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="RecordInfluxDB.queue.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="RecordInfluxDB.queue.Set">
       <LineId Id="2" Count="0" />
     </LineIds>
   </POU>
