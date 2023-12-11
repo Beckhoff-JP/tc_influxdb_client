@@ -12,7 +12,8 @@ Insert dedicated driver for InfluxDB.
 
 	2023-03-09
 	
-Infosys Link:  `https://infosys.beckhoff.com/content/1033/tf6420_tc3_database_server/8117583755.html?id=5199556541044360835 <https://infosys.beckhoff.com/content/1033/tf6420_tc3_database_server/8117583755.html?id=5199556541044360835>`
+This function block is based on sample code published on infosys sites. 
+Link:  `https://infosys.beckhoff.com/content/1033/tf6420_tc3_database_server/8117583755.html?id=5199556541044360835 <https://infosys.beckhoff.com/content/1033/tf6420_tc3_database_server/8117583755.html?id=5199556541044360835>`
 
 	
 *)
@@ -122,7 +123,8 @@ END_VAR
       </Set>
     </Property>
     <Property Name="queue" Id="{9e0e16f0-3d31-4150-b701-80b92abe9211}">
-      <Declaration><![CDATA[{warning 'add property implementation'}
+      <Declaration><![CDATA[(*Property of database command queue*)
+{warning 'add property implementation'}
 PROPERTY queue : REFERENCE TO dequeue
 ]]></Declaration>
       <Get Name="Get" Id="{67bb3399-7d3e-42aa-a50d-532cc78f00af}">

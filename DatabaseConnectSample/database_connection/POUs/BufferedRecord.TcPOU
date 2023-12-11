@@ -39,7 +39,8 @@ END_VAR
       <ST><![CDATA[]]></ST>
     </Implementation>
     <Property Name="buffer_size" Id="{b36ce7a6-bd18-43aa-8301-c9010135cc3f}">
-      <Declaration><![CDATA[PROPERTY buffer_size : UDINT]]></Declaration>
+      <Declaration><![CDATA[(*Number of array items for data buffer*)
+PROPERTY buffer_size : UDINT]]></Declaration>
       <Get Name="Get" Id="{2b913049-e685-41f9-94f3-9003bf0289f3}">
         <Declaration><![CDATA[VAR
 END_VAR
@@ -60,7 +61,8 @@ END_IF]]></ST>
       </Set>
     </Property>
     <Property Name="buffer_usage" Id="{bbb95211-74e1-4da1-9e2b-be2248fb01e5}">
-      <Declaration><![CDATA[PROPERTY PUBLIC buffer_usage : REAL]]></Declaration>
+      <Declaration><![CDATA[(* Usage of data buffer (0 - 1.0) [1/100%] *)
+PROPERTY PUBLIC buffer_usage : REAL]]></Declaration>
       <Get Name="Get" Id="{b46d5d51-f7df-45ba-9aab-0d3c72cb9324}">
         <Declaration><![CDATA[VAR
 END_VAR
@@ -71,7 +73,8 @@ END_VAR
       </Get>
     </Property>
     <Property Name="data_def_structure_name" Id="{12d15a2c-bf0d-4db7-a907-7cebd338c4d6}">
-      <Declaration><![CDATA[PROPERTY PUBLIC data_def_structure_name : Tc2_System.T_MaxString]]></Declaration>
+      <Declaration><![CDATA[(* Structure name for each data model *)
+PROPERTY PUBLIC data_def_structure_name : Tc2_System.T_MaxString]]></Declaration>
       <Get Name="Get" Id="{ebda072e-3d15-41ca-8ab8-cbbe755d7e35}">
         <Declaration><![CDATA[VAR
 END_VAR
@@ -90,7 +93,8 @@ END_VAR
       </Set>
     </Property>
     <Property Name="db_table_name" Id="{457088bd-30e0-4a96-b934-15df6743d6b6}">
-      <Declaration><![CDATA[PROPERTY PUBLIC db_table_name : Tc2_System.T_MaxString]]></Declaration>
+      <Declaration><![CDATA[(* Database table(or measurement) name to which the data is inserted. *)
+PROPERTY PUBLIC db_table_name : Tc2_System.T_MaxString]]></Declaration>
       <Get Name="Get" Id="{4d8d5759-a539-49cb-92e4-0c653a06c4e1}">
         <Declaration><![CDATA[VAR
 END_VAR
@@ -113,8 +117,8 @@ END_VAR
 VAR_INPUT
 	bInitRetains : BOOL; // if TRUE, the retain variables are initialized (warm start / cold start)
 	bInCopyCode : BOOL;  // if TRUE, the instance afterwards gets moved into the copy code (online change)
-	buffer_pointer :PVOID;
-	recorder	:IRecordDB;
+	buffer_pointer :PVOID; // The pointer to data buffer that represent array of structured variable for bulk insert. 
+	recorder	:IRecordDB; // IRecordDB is a interface class of database connection endpoint object.
 END_VAR
 ]]></Declaration>
       <Implementation>
@@ -123,7 +127,8 @@ _queue REF= recorder.queue;]]></ST>
       </Implementation>
     </Method>
     <Property Name="index" Id="{14045ef6-f59e-4a14-bab6-425c44445155}">
-      <Declaration><![CDATA[PROPERTY index : UDINT]]></Declaration>
+      <Declaration><![CDATA[(* Current index of data buffer array *)
+PROPERTY index : UDINT]]></Declaration>
       <Get Name="Get" Id="{ffbd4f52-8e5e-4810-9b2a-1a43f99167d3}">
         <Declaration><![CDATA[VAR
 END_VAR
@@ -173,7 +178,8 @@ END_VAR
       </Set>
     </Property>
     <Property Name="next_index" Id="{f5a3ffd6-3bc9-426f-b681-aff2cae57f4f}">
-      <Declaration><![CDATA[PROPERTY next_index : UDINT]]></Declaration>
+      <Declaration><![CDATA[(* The target buffer index at which assume the data in buffer reaches specified size and bulk insert command be sent to database engine.  *)
+PROPERTY next_index : UDINT]]></Declaration>
       <Get Name="Get" Id="{6789c059-d92d-49d3-96f5-eb79ca9b5e2b}">
         <Declaration><![CDATA[VAR
 END_VAR
@@ -184,9 +190,11 @@ END_VAR
       </Get>
     </Property>
     <Method Name="write" Id="{4d6a4f57-2187-4032-b3a4-3e31e3263b61}">
-      <Declaration><![CDATA[METHOD write : BOOL
+      <Declaration><![CDATA[(*The method to write to database through data buffer with queue.*)
+{warning 'add method implementation '}
+METHOD write : BOOL // Return true if data is put on buffer queue successfully.
 VAR_INPUT
-	input_data	: T_Arg;
+	input_data	: T_Arg;	// Set the measured data. It should be same data type as item of data buffer that is set at "buffer_pointer" on "FB_init" constructor.
 END_VAR
 VAR
 	gCurrentData	:T_Arg;

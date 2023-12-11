@@ -44,7 +44,8 @@ END_VAR
       </Set>
     </Property>
     <Property Name="data_def_structure_name" Id="{7d44e6d3-dd1e-44ff-92c9-398d8f26bc37}">
-      <Declaration><![CDATA[PROPERTY PUBLIC data_def_structure_name : Tc2_System.T_MaxString]]></Declaration>
+      <Declaration><![CDATA[(* Structure name for each data model *)
+PROPERTY PUBLIC data_def_structure_name : Tc2_System.T_MaxString]]></Declaration>
       <Get Name="Get" Id="{0e9922b5-feb7-4eac-9f18-8e523edac107}">
         <Declaration><![CDATA[VAR
 END_VAR
@@ -63,7 +64,8 @@ END_VAR
       </Set>
     </Property>
     <Property Name="db_table_name" Id="{ea83b851-e54c-4e7a-911c-a7aa6b36a8fb}">
-      <Declaration><![CDATA[PROPERTY PUBLIC db_table_name : Tc2_System.T_MaxString]]></Declaration>
+      <Declaration><![CDATA[(* Database table(or measurement) name to which the data is inserted. *)
+PROPERTY PUBLIC db_table_name : Tc2_System.T_MaxString]]></Declaration>
       <Get Name="Get" Id="{9b88c631-a1d4-49af-95da-8deb537c2442}">
         <Declaration><![CDATA[VAR
 END_VAR
@@ -86,7 +88,7 @@ END_VAR
 VAR_INPUT
 	bInitRetains : BOOL; // if TRUE, the retain variables are initialized (warm start / cold start)
 	bInCopyCode : BOOL;  // if TRUE, the instance afterwards gets moved into the copy code (online change)
-	recorder	:IRecordDB;
+	recorder	:IRecordDB; // IRecordDB is a interface class of database connection endpoint object.
 END_VAR
 ]]></Declaration>
       <Implementation>
@@ -94,10 +96,11 @@ END_VAR
       </Implementation>
     </Method>
     <Method Name="write" Id="{45ce91f0-746d-4be9-a4ac-d0c33f3391f3}">
-      <Declaration><![CDATA[{warning 'add method implementation '}
+      <Declaration><![CDATA[(*The method to write to database through data buffer with queue.*)
+{warning 'add method implementation '}
 METHOD write : BOOL
 VAR_INPUT
-	input_data	: Tc2_Utilities.T_Arg;
+	input_data	: Tc2_Utilities.T_Arg;	// 	Set the measured data. It should be same data type as item of data buffer that is set at "buffer_pointer" on "FB_init" constructor.
 END_VAR
 
 VAR

@@ -3,7 +3,6 @@
   <POU Name="DatabaseRecord" Id="{08677c20-da58-40c4-913e-93c21a52392f}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM DatabaseRecord
 VAR
-	fbInfluxDBRecorder: INT;
 END_VAR
 ]]></Declaration>
     <Implementation>
