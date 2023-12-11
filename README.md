@@ -10,7 +10,7 @@ This is TwinCAT library that is supporting to record a time series data collecte
 
     Logging to the data and writing to the database is completely asynchronous.
 
-* Automatically scale size of data chunk with database writing speed
+* The size of data chunk is automatically scaled depends on database writing speed
 
     High speed cyclic data will be collected on data buffer and send to database with bulk insert. Each data size of bulk insert is adjusted in order to database throughput.
 
@@ -27,8 +27,9 @@ Add library `TC2_Utilities` due to use `T_Arg` types.
 
     As [this sites](https://infosys.beckhoff.com/content/1033/tf6420_tc3_database_server/8117583755.html?id=5199556541044360835), `Tag` and `Field` data source structure have to be defined as structure on DUTs.
 
+
+    Define tag data
     ```{code-block} pascal
-    :caption: Define tag data
     TYPE DataTag:
     STRUCT
         {attribute 'TagName' := 'machine_id'}
@@ -38,9 +39,9 @@ Add library `TC2_Utilities` due to use `T_Arg` types.
     END_STRUCT
     END_TYPE
     ```
-    ```{code-block} pascal
-    :caption: Define field data extends tag data
 
+    Define field data extends tag data
+    ```{code-block} pascal
     TYPE MotionActivityData EXTENDS DataTag :
     STRUCT
         {attribute 'FieldName' := 'machine_mode'}
@@ -73,9 +74,8 @@ Add library `TC2_Utilities` due to use `T_Arg` types.
 
     "RecordInfluxDB" function block is database connector driver. The instance of this FB should be created as global variable(e.g. named as GVL.fbRecordInfluxDB). This instance has to be executed everytime cyclically on new task which has been configured previous step of this manual.
 
+    Gloval variable list
     ```{code-block} pascal
-    :caption: Gloval variable list
-
     {attribute 'qualified_only'}
     VAR_GLOBAL
         // Database record driver
@@ -83,17 +83,16 @@ Add library `TC2_Utilities` due to use `T_Arg` types.
     END_VAR
     ```
 
+    Program running on independent task and core.
     ```{code-block} pascal
-    :caption: Program running on independent task and core.
-
     // Database Writing actions
     GVL.fbInfluxDBRecorder();
     ```
 
 4. Implement data acquisition logic at near from data generated. These can be inplemented in multiple location across tasks.
 
+    Declaring variables of data buffer and Business logic controller FB
     ```{code-block}
-    :caption: Declaring variables of data buffer and Business logic controller FB
     VAR CONSTANT
         DATA_BUFFER_SIZE : UDINT := 25000;
     END_VAR
@@ -105,6 +104,8 @@ Add library `TC2_Utilities` due to use `T_Arg` types.
         fbActivityDataController	:BufferedRecord(ADR(motion_activity_data_buffer), HMI.fbInfluxDBRecorder); // data acquision controller.
     END_VAR
     ```
+
+    Program implementation at the data acquisition location. This implementation is needed each of data models.
 
     ```{code-block}
 
@@ -119,8 +120,10 @@ Add library `TC2_Utilities` due to use `T_Arg` types.
         :
 
     // Property set for insert command    
-    fbActivityDataController.db_table_name := 'MotionActivityData';
+    fbActivityDataController.db_table_name := 'MeasurementOfMotionData';
     fbActivityDataController.data_def_structure_name := 'MotionActivityData';
+    fbActivityDataController.minimal_chunk_size := 100;
+    fbActivityDataController.buffer_size := DATA_BUFFER_SIZE;
 
     // Writing acquired data to queue buffer by write method.
     // Acquired data should be convert to 'F_BIGTYPE' type child of T_Arg generics.
