@@ -3,8 +3,8 @@
   <GVL Name="GVL" Id="{6f3eba4c-e974-471d-8fe6-3536cf2de0a1}">
     <Declaration><![CDATA[{attribute 'qualified_only'}
 VAR_GLOBAL
-	tsdb_command_queue	:CommandQueueMember;
-	//psql_command_queue	:CommandQueueMember;
+	// Database record driver
+	fbInfluxDBRecorder	:RecordInfluxDB(DBID := 1);
 END_VAR]]></Declaration>
   </GVL>
 </TcPlcObject>

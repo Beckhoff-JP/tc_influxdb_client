@@ -12,5 +12,16 @@
         <Declaration><![CDATA[]]></Declaration>
       </Set>
     </Property>
+    <Property Name="queue" Id="{18d54e9e-17bd-4a1e-8024-4a0247b3ade1}">
+      <Declaration><![CDATA[PROPERTY queue : REFERENCE TO dequeue]]></Declaration>
+      <Get Name="Get" Id="{d1e55aac-b05f-4975-8355-8cb725db3b42}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+      <Set Name="Set" Id="{31f7b075-694c-4eea-b938-0dbf3bc2b8ab}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+      </Set>
+    </Property>
   </Itf>
 </TcPlcObject>

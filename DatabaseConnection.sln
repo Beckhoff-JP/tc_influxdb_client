@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.28307.1913
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{B1E792BE-AA5F-4E3C-8C82-674BF9C0715B}") = "DatabaseConnection", "DatabaseConnectSample\DatabaseConnection.tsproj", "{D611C9D2-C6CD-4C1A-BD26-0C7308207E82}"
 EndProject
+Project("{BACAAE27-5D5D-4513-97FF-0FED82FEF961}") = "DatabaseConnectionProject", "DatabaseConnectionProject\DatabaseConnectionProject.tcconnproj", "{72A5786B-FC27-4B50-BB0F-B42481D97A58}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|TwinCAT CE7 (ARMV7) = Debug|TwinCAT CE7 (ARMV7)
@@ -37,6 +39,16 @@ Global
 		{D611C9D2-C6CD-4C1A-BD26-0C7308207E82}.Release|TwinCAT RT (x64).Build.0 = Release|TwinCAT RT (x64)
 		{D611C9D2-C6CD-4C1A-BD26-0C7308207E82}.Release|TwinCAT RT (x86).ActiveCfg = Release|TwinCAT RT (x86)
 		{D611C9D2-C6CD-4C1A-BD26-0C7308207E82}.Release|TwinCAT RT (x86).Build.0 = Release|TwinCAT RT (x86)
+		{72A5786B-FC27-4B50-BB0F-B42481D97A58}.Debug|TwinCAT CE7 (ARMV7).ActiveCfg = Debug|TwinCAT CE7 (ARMV7)
+		{72A5786B-FC27-4B50-BB0F-B42481D97A58}.Debug|TwinCAT HMI.ActiveCfg = Debug|TwinCAT OS (ARMT2)
+		{72A5786B-FC27-4B50-BB0F-B42481D97A58}.Debug|TwinCAT OS (ARMT2).ActiveCfg = Debug|TwinCAT OS (ARMT2)
+		{72A5786B-FC27-4B50-BB0F-B42481D97A58}.Debug|TwinCAT RT (x64).ActiveCfg = Debug|TwinCAT RT (x64)
+		{72A5786B-FC27-4B50-BB0F-B42481D97A58}.Debug|TwinCAT RT (x86).ActiveCfg = Debug|TwinCAT RT (x86)
+		{72A5786B-FC27-4B50-BB0F-B42481D97A58}.Release|TwinCAT CE7 (ARMV7).ActiveCfg = Release|TwinCAT CE7 (ARMV7)
+		{72A5786B-FC27-4B50-BB0F-B42481D97A58}.Release|TwinCAT HMI.ActiveCfg = Release|TwinCAT OS (ARMT2)
+		{72A5786B-FC27-4B50-BB0F-B42481D97A58}.Release|TwinCAT OS (ARMT2).ActiveCfg = Release|TwinCAT OS (ARMT2)
+		{72A5786B-FC27-4B50-BB0F-B42481D97A58}.Release|TwinCAT RT (x64).ActiveCfg = Release|TwinCAT RT (x64)
+		{72A5786B-FC27-4B50-BB0F-B42481D97A58}.Release|TwinCAT RT (x86).ActiveCfg = Release|TwinCAT RT (x86)
 		{8299BEB1-A589-4E10-8266-1D808687532A}.Debug|TwinCAT CE7 (ARMV7).ActiveCfg = Debug|TwinCAT CE7 (ARMV7)
 		{8299BEB1-A589-4E10-8266-1D808687532A}.Debug|TwinCAT CE7 (ARMV7).Build.0 = Debug|TwinCAT CE7 (ARMV7)
 		{8299BEB1-A589-4E10-8266-1D808687532A}.Debug|TwinCAT HMI.ActiveCfg = Debug|TwinCAT RT (x86)

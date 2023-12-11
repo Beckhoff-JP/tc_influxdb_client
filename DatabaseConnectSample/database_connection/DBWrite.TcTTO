@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <Task Name="DBWrite" Id="{39ed1929-db5a-4f36-94a5-4d4c4c152770}">
+    <!--CycleTime in micro seconds.-->
+    <CycleTime>10000</CycleTime>
+    <Priority>1</Priority>
+    <PouCall>
+      <Name>DatabaseRecord</Name>
+    </PouCall>
+    <TaskFBGuid>{a00c2e31-4ab0-4de5-ae72-b9489ca05d79}</TaskFBGuid>
+    <Fb_init>{4db963f4-ad31-4849-a71a-280467fa5232}</Fb_init>
+    <Fb_exit>{9c57e1ab-253d-4e0d-9f6f-31506ff0615d}</Fb_exit>
+    <CycleUpdate>{869c20e9-3d3b-4f97-923d-654d667668aa}</CycleUpdate>
+    <PostCycleUpdate>{b3bbbde3-9da8-4875-887a-4f9ee35f4fb4}</PostCycleUpdate>
+  </Task>
+</TcPlcObject>

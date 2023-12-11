@@ -15,11 +15,11 @@
     <Implicit_KindOfTask>{111a3a0a-a1c3-4658-8965-f07c76c3b4be}</Implicit_KindOfTask>
     <Implicit_Jitter_Distribution>{05417311-1989-419a-be34-2a06b80a3e45}</Implicit_Jitter_Distribution>
     <LibraryReferences>{e16bc9cb-c3ed-44c4-ac0c-bcd4e8eb8e71}</LibraryReferences>
-    <Company>Beckhoff co. ltd.</Company>
+    <Company>Beckhoff K.K. - Japan</Company>
     <Released>false</Released>
     <Title>influxdb-client</Title>
-    <ProjectVersion>1.0.0.4</ProjectVersion>
-    <DefaultNamespace>bajp</DefaultNamespace>
+    <ProjectVersion>1.0.1.0</ProjectVersion>
+    <DefaultNamespace>tf6420</DefaultNamespace>
     <DocFormat>reStructuredText</DocFormat>
     <LibraryCategories>
       <LibraryCategory>
@@ -69,16 +69,19 @@
       </LibraryCategory>
     </LibraryCategories>
     <SelectedLibraryCategories>
-      <Id>{1547e2ea-7ffb-4c94-becc-56f97d1a03bd}</Id>
       <Id>{36e0796a-fe77-4402-a334-f23377a474d0}</Id>
     </SelectedLibraryCategories>
     <PreserveCompiledLibComments>false</PreserveCompiledLibComments>
     <Placeholder>
     </Placeholder>
     <Author>Takashi Ichihashi</Author>
+    <Description>The database recording library for InfluxDB.
+Requirements:
+	Tc2_Utilities / T_Arg function
+</Description>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="DBTask.TcTTO">
+    <Compile Include="DBWrite.TcTTO">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="DUTs\DatabaseThroughput.TcDUT">
@@ -96,9 +99,6 @@
     <Compile Include="DUTs\PerformanceData.TcDUT">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="DUTs\CommandQueueMember.TcDUT">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="DUTs\ProcessModeData.TcDUT">
       <SubType>Code</SubType>
     </Compile>
@@ -109,35 +109,35 @@
       <SubType>Code</SubType>
       <LinkAlways>true</LinkAlways>
     </Compile>
-    <Compile Include="GVLs\LibraryParameter.TcGVL">
+    <Compile Include="GVLs\DBLibParam.TcGVL">
       <SubType>Code</SubType>
       <LinkAlways>true</LinkAlways>
-    </Compile>
-    <Compile Include="IRecordDB.TcIO">
-      <SubType>Code</SubType>
     </Compile>
     <Compile Include="PlcTask.TcTTO">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\DbWriteInfluxDB.TcPOU">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="POUs\DbWriteSQL.TcPOU">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="POUs\PLCTaskMeasurement.TcPOU">
+    <Compile Include="POUs\DatabaseRecord.TcPOU">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\dequeue.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\RecordDataQueue.TcPOU">
+    <Compile Include="POUs\BufferedRecord.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\DirectRecord.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\IRecordDataQueue.TcIO">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\IRecordDB.TcIO">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\RecordInfluxDB.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\RecordData.TcPOU">
+    <Compile Include="POUs\SampleProgram.TcPOU">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\RecordSQL.TcPOU">
@@ -154,9 +154,6 @@
     <Compile Include="Project Information\F_GetVersion.TcPOU">
       <SubType>Code</SubType>
       <SystemCall>true</SystemCall>
-    </Compile>
-    <Compile Include="IRecordDataQueue.TcIO">
-      <SubType>Code</SubType>
     </Compile>
     <Compile Include="Version\Global_Version.TcGVL">
       <SubType>Code</SubType>

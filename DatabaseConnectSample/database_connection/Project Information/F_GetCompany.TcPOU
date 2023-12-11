@@ -10,11 +10,11 @@ VAR_INPUT
 	
 END_VAR]]></Declaration>
     <Implementation>
-      <ST><![CDATA[F_GetCompany := "Beckhoff co. ltd.";
+      <ST><![CDATA[F_GetCompany := "Beckhoff K.K. - Japan";
 ]]></ST>
     </Implementation>
     <LineIds Name="F_GetCompany">
-      <LineId Id="10" Count="0" />
+      <LineId Id="33" Count="0" />
       <LineId Id="2" Count="0" />
     </LineIds>
   </POU>

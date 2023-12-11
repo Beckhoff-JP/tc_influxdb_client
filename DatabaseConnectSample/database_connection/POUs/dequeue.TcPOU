@@ -41,40 +41,44 @@ This is example code that the sInputData is queued in and queued out for sOutput
 *)
 
 FUNCTION_BLOCK dequeue
-
-VAR_INPUT
-END_VAR
-VAR_OUTPUT
-	num_of_data:	UDINT;
-	full:			BOOL;
-END_VAR
 VAR
-	nWriteIndex: UDINT;
-	nReadIndex: UDINT;
+	_queue_usage:	UDINT;
+	_queue_size:	UDINT := DbLibParam.COMMAND_QUEUE_BUFFER_SIZE;
+	nWriteIndex: 	UDINT;
+	nReadIndex: 	UDINT;
+	queue_buffer:	ARRAY [0..DbLibParam.COMMAND_QUEUE_BUFFER_SIZE - 1] OF DbInsertCommand;
 END_VAR
-
-VAR_IN_OUT
-	aData:		ARRAY [*] OF T_Arg;
-END_VAR]]></Declaration>
+]]></Declaration>
     <Implementation>
-      <ST><![CDATA[full :=  num_of_data >= DINT_TO_UDINT(UPPER_BOUND(aData,1));
-
+      <ST><![CDATA[
 ]]></ST>
     </Implementation>
+    <Property Name="full" Id="{2090bbfa-cf3b-42d9-83cb-c8801d1b5ffd}">
+      <Declaration><![CDATA[PROPERTY full : BOOL]]></Declaration>
+      <Get Name="Get" Id="{11d8a220-140d-44af-91dc-0c0b14043cba}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[full :=  _queue_usage >= DBLibParam.COMMAND_QUEUE_BUFFER_SIZE - 1;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
     <Method Name="get" Id="{8b74c0af-e452-4b04-80b6-4bc8c107a41d}">
-      <Declaration><![CDATA[METHOD get : T_Arg
+      <Declaration><![CDATA[METHOD get : DbInsertCommand
 VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[//Set buffer index
 
-IF num_of_data > 0 THEN
-	get := aData[nReadIndex];
-	num_of_data := num_of_data - 1;
+IF _queue_usage > 0 THEN
+	get := queue_buffer[nReadIndex];
+	get.accumulated_amount := get.accumulated_amount - get.chunk_size;
+	_queue_usage := _queue_usage - 1;
 	nReadIndex := nReadIndex + 1;
-	IF nReadIndex > DINT_TO_UDINT(UPPER_BOUND(aData, 1)) THEN
-		nReadIndex := DINT_TO_UDINT(LOWER_BOUND(aData, 1));
+	IF nReadIndex > DBLibParam.COMMAND_QUEUE_BUFFER_SIZE - 1 THEN
+		nReadIndex := 0;
 	END_IF
 END_IF
 
@@ -99,35 +103,28 @@ END_VAR
 END_VAR
 ]]></Declaration>
         <Implementation>
-          <ST><![CDATA[max_index := DINT_TO_UDINT(UPPER_BOUND(aData, 1));]]></ST>
+          <ST><![CDATA[max_index := DBLibParam.COMMAND_QUEUE_BUFFER_SIZE - 1;]]></ST>
         </Implementation>
       </Get>
-      <Set Name="Set" Id="{ad8e00b7-5dcf-4645-b77d-fd079abe6812}">
-        <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[]]></ST>
-        </Implementation>
-      </Set>
     </Property>
     <Method Name="put" Id="{bc495a1c-f6bd-4bba-8df0-e2c2c6cddb62}">
       <Declaration><![CDATA[METHOD PUBLIC put : UDINT
 VAR_INPUT
-	lData:	T_Arg;
+	lData:	DbInsertCommand;
 END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[//Set buffer index
 
-IF num_of_data >= DINT_TO_UDINT(UPPER_BOUND(aData, 1)) THEN
+IF _queue_usage >= DBLibParam.COMMAND_QUEUE_BUFFER_SIZE - 1 THEN
 	put := 0;
 ELSE
-	MEMCPY(ADR(aData[nWriteIndex]), ADR(lData), SIZEOF(lData));
-	num_of_data := num_of_data + 1;
+	queue_buffer[nWriteIndex] := lData;
+	lData.accumulated_amount := lData.accumulated_amount + lData.chunk_size;
+	_queue_usage := _queue_usage + 1;
 	nWriteIndex := nWriteIndex + 1;
-	IF nWriteIndex > DINT_TO_UDINT(UPPER_BOUND(aData, 1)) THEN
-		nWriteIndex := DINT_TO_UDINT(LOWER_BOUND(aData, 1));
+	IF nWriteIndex > DBLibParam.COMMAND_QUEUE_BUFFER_SIZE - 1 THEN
+		nWriteIndex := 0;
 	END_IF
 	put := 1;
 END_IF
@@ -135,16 +132,41 @@ END_IF
 RETURN;]]></ST>
       </Implementation>
     </Method>
+    <Property Name="queue_size" Id="{8ced692f-17fa-4590-b6bd-53841bf68804}">
+      <Declaration><![CDATA[PROPERTY queue_size : UDINT]]></Declaration>
+      <Get Name="Get" Id="{dfdc89e1-eeb1-4141-9046-b5b43fa9d899}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[queue_size := _queue_size;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="queue_usage" Id="{6eb19352-bb31-4ae0-8d30-bb26bad7bb02}">
+      <Declaration><![CDATA[PROPERTY queue_usage : UDINT]]></Declaration>
+      <Get Name="Get" Id="{2d47a586-eb1f-401e-b5b0-233891fb8ef8}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[queue_usage := _queue_usage;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
     <LineIds Name="dequeue">
-      <LineId Id="156" Count="0" />
       <LineId Id="174" Count="0" />
       <LineId Id="173" Count="0" />
+    </LineIds>
+    <LineIds Name="dequeue.full.Get">
+      <LineId Id="2" Count="0" />
     </LineIds>
     <LineIds Name="dequeue.get">
       <LineId Id="6" Count="0" />
       <LineId Id="11" Count="0" />
       <LineId Id="22" Count="0" />
       <LineId Id="12" Count="0" />
+      <LineId Id="28" Count="0" />
       <LineId Id="21" Count="0" />
       <LineId Id="17" Count="3" />
       <LineId Id="24" Count="0" />
@@ -157,20 +179,26 @@ RETURN;]]></ST>
     <LineIds Name="dequeue.max_index.Get">
       <LineId Id="2" Count="0" />
     </LineIds>
-    <LineIds Name="dequeue.max_index.Set">
-      <LineId Id="2" Count="0" />
-    </LineIds>
     <LineIds Name="dequeue.put">
       <LineId Id="6" Count="0" />
-      <LineId Id="31" Count="2" />
+      <LineId Id="49" Count="0" />
+      <LineId Id="32" Count="1" />
       <LineId Id="30" Count="0" />
-      <LineId Id="37" Count="1" />
+      <LineId Id="37" Count="0" />
+      <LineId Id="69" Count="0" />
+      <LineId Id="38" Count="0" />
       <LineId Id="7" Count="2" />
       <LineId Id="21" Count="0" />
       <LineId Id="43" Count="0" />
       <LineId Id="36" Count="0" />
       <LineId Id="29" Count="0" />
       <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="dequeue.queue_size.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="dequeue.queue_usage.Get">
+      <LineId Id="2" Count="0" />
     </LineIds>
   </POU>
 </TcPlcObject>
