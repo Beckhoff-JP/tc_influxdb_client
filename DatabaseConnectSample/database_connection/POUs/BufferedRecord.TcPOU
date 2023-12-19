@@ -31,7 +31,7 @@ VAR
 	diff_target		: REAL;
 	pid_ope			: REAL;	
 	chunk_size 		: UDINT;
-	_queue			:REFERENCE TO dequeue;
+	_recorder 		:IRecordDB;
 	
 END_VAR
 ]]></Declaration>
@@ -123,7 +123,7 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[_buffer_pointer := buffer_pointer;
-_queue REF= recorder.queue;]]></ST>
+_recorder := recorder;]]></ST>
       </Implementation>
     </Method>
     <Property Name="index" Id="{14045ef6-f59e-4a14-bab6-425c44445155}">
@@ -203,7 +203,7 @@ VAR
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[IF _buffer_pointer = 0 OR NOT __ISVALIDREF(_queue) THEN
+        <ST><![CDATA[IF _recorder = 0 THEN
 	write := FALSE;
 	RETURN;
 END_IF
@@ -220,7 +220,7 @@ END_IF
 IF _next_index <= _current_index OR _current_index >= nDataBufferMaxIndex THEN
 	max_chunk_size := nDataBufferMaxIndex + 1;
 	// put_data
-	IF NOT _queue.full THEN
+	IF NOT _recorder.queue.full THEN
 		data_size := _current_index - start_index + 1;
 		_avalable_buffer_size := UDINT_TO_DINT(nDataBufferMaxIndex) - UDINT_TO_DINT(accumulated_amount) +1;
 		IF _avalable_buffer_size < UDINT_TO_DINT(data_size) AND _avalable_buffer_size > 0 THEN
@@ -241,7 +241,7 @@ IF _next_index <= _current_index OR _current_index >= nDataBufferMaxIndex THEN
 			work_data_body.SchemaName := sSchemaName;
 			work_data_body.accumulated_amount REF= accumulated_amount;
 			// queue in
-			_queue.put(work_data_body);
+			_recorder.queue.put(work_data_body);
 			start_index := _current_index + 1;
 		END_IF
 	END_IF
