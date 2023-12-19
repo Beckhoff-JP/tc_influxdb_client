@@ -189,6 +189,27 @@ END_VAR
         </Implementation>
       </Get>
     </Property>
+    <Property Name="recorder" Id="{953ac517-3ea9-4017-9815-a96521973cf0}">
+      <Declaration><![CDATA[{warning 'add property implementation'}
+PROPERTY recorder : IRecordDB
+]]></Declaration>
+      <Get Name="Get" Id="{18029c01-d41d-4db6-850d-5357d4d467a5}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[recorder := _recorder;]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{27b20a6d-ac34-4038-b724-3d4c6ddb496c}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[_recorder := recorder;]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
     <Method Name="write" Id="{4d6a4f57-2187-4032-b3a4-3e31e3263b61}">
       <Declaration><![CDATA[(*The method to write to database through data buffer with queue.*)
 {warning 'add method implementation '}
@@ -321,6 +342,12 @@ write := TRUE;]]></ST>
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="BufferedRecord.next_index.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="BufferedRecord.recorder.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="BufferedRecord.recorder.Set">
       <LineId Id="2" Count="0" />
     </LineIds>
     <LineIds Name="BufferedRecord.write">
