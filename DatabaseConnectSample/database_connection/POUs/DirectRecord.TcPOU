@@ -16,7 +16,7 @@ VAR
 	sSchemaName					: Tc2_System.T_MaxString;	// Schema name as a inserted data variable type name as structure
 	accumulated_amount		: UDINT := 0;		// buffer usage
 	nCycleTime		: UDINT;					// PLC task cycle time setting(in 100ns)
-	_queue			: REFERENCE TO dequeue;
+	_recorder			: IRecordDB;
 	
 END_VAR
 ]]></Declaration>
@@ -92,7 +92,7 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[_queue REF= recorder.queue;]]></ST>
+        <ST><![CDATA[_recorder := recorder;]]></ST>
       </Implementation>
     </Method>
     <Method Name="write" Id="{45ce91f0-746d-4be9-a4ac-d0c33f3391f3}">
@@ -109,8 +109,7 @@ VAR
 END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[// put_data
-IF NOT _queue.full THEN
-	
+IF NOT _recorder.queue.full THEN
 	// set value of insert command
 	work_data_body.data_body := input_data;
 	work_data_body.start_time := F_GetSystemTime();
@@ -121,7 +120,7 @@ IF NOT _queue.full THEN
 	work_data_body.accumulated_amount REF= accumulated_amount;
 	// queue in
 	IF accumulated_amount = 0 THEN
-		_queue.put(work_data_body);
+		_recorder.queue.put(work_data_body);
 	END_IF
 END_IF]]></ST>
       </Implementation>
@@ -152,7 +151,7 @@ END_IF]]></ST>
     </LineIds>
     <LineIds Name="DirectRecord.write">
       <LineId Id="57" Count="1" />
-      <LineId Id="63" Count="7" />
+      <LineId Id="64" Count="6" />
       <LineId Id="94" Count="0" />
       <LineId Id="72" Count="1" />
       <LineId Id="79" Count="0" />
