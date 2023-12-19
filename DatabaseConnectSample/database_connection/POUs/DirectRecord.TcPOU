@@ -95,6 +95,27 @@ END_VAR
         <ST><![CDATA[_recorder := recorder;]]></ST>
       </Implementation>
     </Method>
+    <Property Name="recorder" Id="{1aa6d36c-4ff5-4208-9d6d-fb2dc335f8ab}">
+      <Declaration><![CDATA[{warning 'add property implementation'}
+PROPERTY recorder : IRecordDB
+]]></Declaration>
+      <Get Name="Get" Id="{f3a466fe-3770-4e8e-a770-59810af1bebe}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[recorder := _recorder;]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{8b4a1c8f-d2e7-4354-9e83-a6a1cce7201f}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[_recorder := recorder;]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
     <Method Name="write" Id="{45ce91f0-746d-4be9-a4ac-d0c33f3391f3}">
       <Declaration><![CDATA[(*The method to write to database through data buffer with queue.*)
 {warning 'add method implementation '}
@@ -148,6 +169,12 @@ END_IF]]></ST>
     </LineIds>
     <LineIds Name="DirectRecord.FB_init">
       <LineId Id="7" Count="0" />
+    </LineIds>
+    <LineIds Name="DirectRecord.recorder.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="DirectRecord.recorder.Set">
+      <LineId Id="2" Count="0" />
     </LineIds>
     <LineIds Name="DirectRecord.write">
       <LineId Id="57" Count="1" />
