@@ -54,7 +54,7 @@
 		</System>
 		<Plc>
 			<Project GUID="{8299BEB1-A589-4E10-8266-1D808687532A}" Name="database_connection" PrjFilePath="database_connection\database_connection.plcproj" TmcFilePath="database_connection\database_connection.tmc" ReloadTmc="true" AmsPort="851" FileArchiveSettings="#x000e" SymbolicMapping="true">
-				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="1" TmcPath="database_connection\database_connection.tmc" TmcHash="{72675CD1-B188-B29A-9391-8FC8CB058E42}">
+				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="1" TmcPath="database_connection\database_connection.tmc" TmcHash="{F3D0D527-64C5-C135-BCF7-67E9BB5855A0}">
 					<Name>database_connection Instance</Name>
 					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
 					<Contexts>

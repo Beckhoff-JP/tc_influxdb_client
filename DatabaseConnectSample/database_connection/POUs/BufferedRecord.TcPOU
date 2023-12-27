@@ -221,6 +221,8 @@ VAR
 	gCurrentData	:T_Arg;
 	pCurrentBufferPointer : PVOID;
 	work_data_body  :DbInsertCommand;
+	nTaskIdx: DINT;
+	queue_input_flag: BOOL;
 END_VAR
 ]]></Declaration>
       <Implementation>
@@ -238,8 +240,10 @@ IF _current_index = start_index THEN
 	start_data := gCurrentData;
 END_IF
 
+queue_input_flag := FALSE;
+
 IF _next_index <= _current_index OR _current_index >= nDataBufferMaxIndex THEN
-	max_chunk_size := nDataBufferMaxIndex + 1;
+	//max_chunk_size := nDataBufferMaxIndex + 1;
 	// put_data
 	IF NOT _recorder.queue.full THEN
 		data_size := _current_index - start_index + 1;
@@ -250,38 +254,45 @@ IF _next_index <= _current_index OR _current_index >= nDataBufferMaxIndex THEN
 			data_size := 0;
 		END_IF
 
-		IF data_size > 1 THEN
-			
+		IF data_size > 1 THEN			
 			// calculate each cycle time by num of data among start time and current time.
 			nCycleTime := ULINT_TO_UDINT(F_GetSystemTime() - start_time) / (data_size - 1);
-			work_data_body.data_body := start_data;
-			work_data_body.start_time := start_time;
-			work_data_body.cycle_time_100ns := nCycleTime;
-			work_data_body.chunk_size := data_size;
-			work_data_body.MeasurementName := sMeasurementName;
-			work_data_body.SchemaName := sSchemaName;
-			work_data_body.accumulated_amount REF= accumulated_amount;
-			// queue in
-			_recorder.queue.put(work_data_body);
-			start_index := _current_index + 1;
+		ELSE
+			nTaskIdx := GETCURTASKINDEXEX();
+			IF nTaskIdx > 0 THEN
+				nCycleTime := TwinCAT_SystemInfoVarList._TaskInfo[nTaskIdx].CycleTime;
+			END_IF
 		END_IF
+		
+		work_data_body.data_body := start_data;
+		work_data_body.start_time := start_time;
+		work_data_body.cycle_time_100ns := nCycleTime;
+		work_data_body.chunk_size := data_size;
+		work_data_body.MeasurementName := sMeasurementName;
+		work_data_body.SchemaName := sSchemaName;
+		work_data_body.accumulated_amount REF= accumulated_amount;
+		// queue in
+		_recorder.queue.put(work_data_body);
+		start_index := _current_index + 1;
+		queue_input_flag := TRUE;
 	END_IF
 END_IF
 
 
-IF last_data_count <> accumulated_amount THEN
+IF last_data_count <> accumulated_amount OR queue_input_flag THEN
+	(*Re-calculate chunk size when amount of buffered data is changed including dequeued by recorder.*)
 	// calculate next index
 	_buffer_usage := UDINT_TO_REAL(accumulated_amount) / UDINT_TO_REAL(nDataBufferMaxIndex + 1);
 	diff_target := UDINT_TO_REAL(max_chunk_size) * _buffer_usage;
 	pid_ope := UDINT_TO_REAL(min_chunk_size) + diff_target;
 	chunk_size := REAL_TO_UDINT(pid_ope);
-	//chunk_size := minimum_chunk_size;
-	_next_index := _current_index + chunk_size - 1;
 	IF chunk_size < min_chunk_size OR pid_ope < 0 THEN
 		chunk_size := min_chunk_size;
 	ELSIF chunk_size > max_chunk_size THEN
 		chunk_size := max_chunk_size;
 	END_IF
+	//chunk_size := minimum_chunk_size;
+	_next_index := _current_index + chunk_size;
 END_IF
 
 last_data_count := accumulated_amount;
@@ -351,7 +362,24 @@ write := TRUE;]]></ST>
       <LineId Id="2" Count="0" />
     </LineIds>
     <LineIds Name="BufferedRecord.write">
-      <LineId Id="431" Count="69" />
+      <LineId Id="431" Count="13" />
+      <LineId Id="541" Count="0" />
+      <LineId Id="540" Count="0" />
+      <LineId Id="445" Count="12" />
+      <LineId Id="459" Count="0" />
+      <LineId Id="523" Count="1" />
+      <LineId Id="520" Count="1" />
+      <LineId Id="519" Count="0" />
+      <LineId Id="522" Count="0" />
+      <LineId Id="517" Count="1" />
+      <LineId Id="461" Count="9" />
+      <LineId Id="537" Count="0" />
+      <LineId Id="472" Count="4" />
+      <LineId Id="514" Count="0" />
+      <LineId Id="477" Count="4" />
+      <LineId Id="484" Count="4" />
+      <LineId Id="512" Count="1" />
+      <LineId Id="489" Count="11" />
       <LineId Id="196" Count="0" />
     </LineIds>
   </POU>

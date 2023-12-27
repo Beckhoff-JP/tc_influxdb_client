@@ -18,7 +18,7 @@
     <Company>Beckhoff K.K. - Japan</Company>
     <Released>false</Released>
     <Title>influxdb-client</Title>
-    <ProjectVersion>1.0.1.0</ProjectVersion>
+    <ProjectVersion>1.0.1.1</ProjectVersion>
     <DefaultNamespace>tf6420</DefaultNamespace>
     <DocFormat>reStructuredText</DocFormat>
     <LibraryCategories>
