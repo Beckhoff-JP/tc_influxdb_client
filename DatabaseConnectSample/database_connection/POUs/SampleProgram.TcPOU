@@ -52,23 +52,18 @@ VAR
 
 	// For cycric insert
 	DatabaseThroughputRecordData 		:DatabaseThroughput;	// for insert dataset
-	DatabaseThroughputRecordBuffer 		:ARRAY [0..DBLibParam.DATA_BUFFER_SIZE + 10] OF DatabaseThroughput;
-	fbThroughputDataCommandBuffer		:BufferedRecord(ADR(DatabaseThroughputRecordBuffer), GVL.fbInfluxDBRecorder);		// record controller
-
-	// For direct insert
-	DataBaseProcessModeRecordData	:ProcessModeData;
-	fbProcessModeBuffer					:DirectRecord(GVL.fbInfluxDBRecorder);
+	DatabaseThroughputRecordBuffer 		:ARRAY [0..DBLibParam.DATA_BUFFER_SIZE] OF DatabaseThroughput;
+	fbThroughputDataCommandBuffer		:BufferedRecord(
+												GVL.fbInfluxDBRecorder, 
+												ADR(DatabaseThroughputRecordBuffer), 
+												SIZEOF(DatabaseThroughputRecordBuffer),
+												DBLibParam.DATA_BUFFER_SIZE - 1
+										);		// record controller
 
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[ts_database_metrics();
-ts_process_mode();
-]]></ST>
-    </Implementation>
-    <Action Name="ts_database_metrics" Id="{8cc304ee-f7f2-4ae7-91a1-48a016e700b9}">
-      <Implementation>
-        <ST><![CDATA[(*
+      <ST><![CDATA[(*
 	Database Throughput data insert buffer
 *)
 
@@ -87,77 +82,15 @@ DatabaseThroughputRecordData.buffer_usage := fbThroughputDataCommandBuffer.buffe
 (* Queue set *)
 
 // Insert command queue
-fbThroughputDataCommandBuffer.db_table_name := 'DatabaseThroughput'; // Measurement name
-fbThroughputDataCommandBuffer.data_def_structure_name := 'DatabaseThroughput'; // Structure type name
+fbThroughputDataCommandBuffer.structure_name := 'DatabaseThroughput'; // Measurement name
+fbThroughputDataCommandBuffer.SQL_parameters.table_name := 'DatabaseThroughput'; // Structure type name
 
 // cyclic record
-fbThroughputDataCommandBuffer.write(
-	input_data := F_BIGTYPE(
-		pData := ADR(DatabaseThroughputRecordData), 
-		cbLen := SIZEOF(DatabaseThroughputRecordData)
-	)
-);]]></ST>
-      </Implementation>
-    </Action>
-    <Action Name="ts_process_mode" Id="{daa9f062-06e6-4077-b528-c0735d8c4a4a}">
-      <Implementation>
-        <ST><![CDATA[
-// Add PLC calculation stress step by step.
-test_timer(IN := NOT test_timer.Q, PT := T#5M);
-
-// Interval flag "On processing"
-process_timer(IN := NOT process_timer.Q, PT := T#3S);
-
-// toggle bExecuting flag ON / OFF 
-bExecuting := (NOT bExecuting AND process_timer.Q) OR (DataBaseProcessModeRecordData.executing AND NOT process_timer.Q);
-
-
-(*Create insert data *)
-
-// Tag Data set
-DataBaseProcessModeRecordData.machine_id := 'machine-1';
-DataBaseProcessModeRecordData.job_id := 'task_info';
-// Field data set
-DataBaseProcessModeRecordData.executing := bExecuting;
-DataBaseProcessModeRecordData.message := Tc2_Standard.CONCAT('LOOP COUNT: ',UDINT_TO_STRING(target));
-
-fbProcessModeBuffer.db_table_name := 'PerformanceData'; // Measurement name
-fbProcessModeBuffer.data_def_structure_name := 'ProcessModeData'; // Structure type name
-
-IF process_timer.Q THEN
-	fbProcessModeBuffer.write(input_data := F_BIGTYPE(
-		pData := ADR(DataBaseProcessModeRecordData), 
-		cbLen := SIZEOF(DataBaseProcessModeRecordData)
-	)
-);
-END_IF
-]]></ST>
-      </Implementation>
-    </Action>
+fbThroughputDataCommandBuffer.write(ADR(DatabaseThroughputRecordData));]]></ST>
+    </Implementation>
     <LineIds Name="SampleProgram">
-      <LineId Id="1026" Count="0" />
-      <LineId Id="4334" Count="1" />
-    </LineIds>
-    <LineIds Name="SampleProgram.ts_database_metrics">
-      <LineId Id="137" Count="5" />
-      <LineId Id="163" Count="0" />
-      <LineId Id="143" Count="7" />
-      <LineId Id="164" Count="1" />
-      <LineId Id="151" Count="10" />
-      <LineId Id="66" Count="0" />
-    </LineIds>
-    <LineIds Name="SampleProgram.ts_process_mode">
-      <LineId Id="55" Count="2" />
-      <LineId Id="61" Count="2" />
-      <LineId Id="79" Count="0" />
-      <LineId Id="78" Count="0" />
-      <LineId Id="65" Count="1" />
-      <LineId Id="76" Count="0" />
-      <LineId Id="53" Count="1" />
-      <LineId Id="33" Count="5" />
-      <LineId Id="40" Count="8" />
-      <LineId Id="50" Count="1" />
-      <LineId Id="1" Count="0" />
+      <LineId Id="4395" Count="22" />
+      <LineId Id="4422" Count="0" />
     </LineIds>
   </POU>
 </TcPlcObject>

@@ -3,15 +3,6 @@
   <Itf Name="IRecordDB" Id="{1d7da905-9dbc-4a62-9363-d7eaf62f12d7}">
     <Declaration><![CDATA[INTERFACE IRecordDB
 ]]></Declaration>
-    <Property Name="query" Id="{0c693f22-a1e1-4998-bbc5-28f2eaaa08a9}">
-      <Declaration><![CDATA[PROPERTY query : string(512)]]></Declaration>
-      <Get Name="Get" Id="{769bd1ee-8ee2-4d6a-b905-0865d7739bb5}">
-        <Declaration><![CDATA[]]></Declaration>
-      </Get>
-      <Set Name="Set" Id="{b5ea8c81-b164-4a8f-a1cc-84f0e1214dde}">
-        <Declaration><![CDATA[]]></Declaration>
-      </Set>
-    </Property>
     <Property Name="queue" Id="{18d54e9e-17bd-4a1e-8024-4a0247b3ade1}">
       <Declaration><![CDATA[PROPERTY queue : REFERENCE TO dequeue]]></Declaration>
       <Get Name="Get" Id="{d1e55aac-b05f-4975-8355-8cb725db3b42}">

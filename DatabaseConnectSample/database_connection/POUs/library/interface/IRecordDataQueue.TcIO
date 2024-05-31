@@ -1,0 +1,77 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <Itf Name="IRecordDataQueue" Id="{31172c77-633a-46d5-b927-3b44dc9446a9}">
+    <Declaration><![CDATA[INTERFACE IRecordDataQueue
+]]></Declaration>
+    <Property Name="buffer_usage" Id="{bbb95211-74e1-4da1-9e2b-be2248fb01e5}">
+      <Declaration><![CDATA[(* Usage of data buffer (0 - 1.0) [1/100%] *)
+PROPERTY PUBLIC buffer_usage : REAL]]></Declaration>
+      <Get Name="Get" Id="{b46d5d51-f7df-45ba-9aab-0d3c72cb9324}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+    <Property Name="index" Id="{e460aa77-ca45-4f13-96dc-b816a60dff6b}">
+      <Declaration><![CDATA[(* Current index of data buffer array *)
+PROPERTY index : UDINT]]></Declaration>
+      <Get Name="Get" Id="{aac43fc6-8efd-45c0-b0cf-d027bf73842a}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+    <Property Name="max_chunk_size" Id="{cccdc3e9-67e9-47fc-852b-8e2771d55e89}">
+      <Declaration><![CDATA[PROPERTY PUBLIC max_chunk_size : UDINT]]></Declaration>
+      <Get Name="Get" Id="{fc6e252c-f848-4a39-9c21-f7ff53c002ff}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+      <Set Name="Set" Id="{1e721816-0567-4324-9f40-9e668b4a3d35}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Set>
+    </Property>
+    <Property Name="min_chunk_size" Id="{e3bb05f7-e3ec-4e39-8e97-4219e0d3085e}">
+      <Declaration><![CDATA[PROPERTY PUBLIC min_chunk_size : UDINT]]></Declaration>
+      <Get Name="Get" Id="{3ed9b572-3559-4ce7-a353-13b579aab20e}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+      <Set Name="Set" Id="{b6ef2794-0a23-4d9d-bc78-f443c359a410}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Set>
+    </Property>
+    <Property Name="next_index" Id="{866bbe0b-0bfb-420a-8769-a67db967247e}">
+      <Declaration><![CDATA[(* The target buffer index at which assume the data in buffer reaches specified size and bulk insert command be sent to database engine.  *)
+PROPERTY next_index : UDINT]]></Declaration>
+      <Get Name="Get" Id="{ca1edb7f-a28f-416d-90af-9def23799e93}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+    <Property Name="recorder" Id="{05e0a9b2-f08e-4739-afd5-6f6c16d70c02}">
+      <Declaration><![CDATA[PROPERTY recorder : IRecordDB]]></Declaration>
+      <Get Name="Get" Id="{8516950e-25f9-49ac-89de-5b59c7c1ebd8}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+      <Set Name="Set" Id="{d0bbd65c-33c5-45ce-96cd-9e98181b5e70}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Set>
+    </Property>
+    <Property Name="SQL_parameters" Id="{e3ba5a7e-d7ca-42d3-81b4-943e3457a079}">
+      <Declaration><![CDATA[PROPERTY SQL_parameters : REFERENCE TO sql_parameters]]></Declaration>
+      <Get Name="Get" Id="{08c54847-014c-4f35-8a23-f450ec4ca099}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+    <Property Name="structure_name" Id="{2c2f0cda-2900-41b3-81b0-f3bceb28a259}">
+      <Declaration><![CDATA[PROPERTY structure_name : T_MaxString]]></Declaration>
+      <Get Name="Get" Id="{496b4656-d04b-46e3-8023-ceeb157da5d0}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+      <Set Name="Set" Id="{3d752c7a-1172-4fc6-8c8a-8b93edd7e040}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Set>
+    </Property>
+    <Method Name="write" Id="{b7310110-45a3-4bf4-930d-2690f31ed7d1}">
+      <Declaration><![CDATA[METHOD write : BOOL
+VAR_INPUT
+	input_data	:PVOID;
+END_VAR
+]]></Declaration>
+    </Method>
+  </Itf>
+</TcPlcObject>

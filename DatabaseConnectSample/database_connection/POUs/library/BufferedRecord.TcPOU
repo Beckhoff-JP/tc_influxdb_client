@@ -9,61 +9,28 @@ FUNCTION_BLOCK BufferedRecord IMPLEMENTS IRecordDataQueue
 VAR
 	_current_index	: UDINT; // current index value
 	_next_index 		: UDINT;
-	sMeasurementName			: Tc2_System.T_MaxString;	// Measurement name of InfluxDB
-	sSchemaName					: Tc2_System.T_MaxString;	// Schema name as a inserted data variable type name as structure
-	min_chunk_size				: UDINT := DBLibParam.DATA_BUFFER_SIZE / 20;		// Minimum chunk size
-	max_chunk_size				: UDINT	:= DBLibParam.DATA_BUFFER_SIZE;				// Maximum chunk size
-	nDataBufferMaxIndex			: UDINT := DBLibParam.DATA_BUFFER_SIZE - 1;			// upper bound of data buffer array.
-	_buffer_pointer : PVOID := 0;
-	
-	// Start point time
-	start_time		: ULINT;
-	start_data 		: T_Arg;
-
-	nCycleTime		: UDINT;					// PLC task cycle time setting(in 100ns)
-	data_size		: UDINT := 1;				// record data size
-	accumulated_amount		: UDINT := 0;		// buffer usage
-	last_data_count	: UDINT := 0;
-	
-	start_index		: UDINT;
-	_buffer_usage	: REAL;				// data usage percentage of data buffer.
-	_avalable_buffer_size	:DINT;
-	diff_target		: REAL;
-	pid_ope			: REAL;	
-	chunk_size 		: UDINT;
-	_recorder 		:IRecordDB;
-	
+	_min_chunk_size				: UDINT := DBLibParam.DATA_BUFFER_SIZE / 20;		// Minimum chunk size
+	_max_chunk_size				: UDINT	:= DBLibParam.DATA_BUFFER_SIZE;				// Maximum chunk size
+	_buffer_byte_size			: UDINT;
+	_buffer_array_size			: UDINT;			// upper bound of data buffer array.
+	_buffer_usage				: REAL;				// data usage percentage of data buffer.
+	_buffer_pointer 			: PVOID := 0;
+	_sql_parameters				: sql_parameters;
+	_structure_pointer : PVOID;
+	_structure_size : UDINT;
+	_structure_name : T_MaxString;
+	_recorder 					: IRecordDB;
 END_VAR
 ]]></Declaration>
     <Implementation>
       <ST><![CDATA[]]></ST>
     </Implementation>
-    <Property Name="buffer_size" Id="{b36ce7a6-bd18-43aa-8301-c9010135cc3f}">
-      <Declaration><![CDATA[(*Number of array items for data buffer*)
-PROPERTY buffer_size : UDINT]]></Declaration>
-      <Get Name="Get" Id="{2b913049-e685-41f9-94f3-9003bf0289f3}">
-        <Declaration><![CDATA[VAR
-END_VAR
+    <Property Name="buffer_usage" Id="{0a2de567-1b68-45ab-abab-35853abf83fa}">
+      <Declaration><![CDATA[{warning 'add property implementation'}
+(* Usage of data buffer (0 - 1.0) [1/100%] *)
+PROPERTY buffer_usage : REAL
 ]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[buffer_size := nDataBufferMaxIndex + 1;]]></ST>
-        </Implementation>
-      </Get>
-      <Set Name="Set" Id="{ced6233f-4469-42d7-a5b7-58237174f40c}">
-        <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[IF buffer_size > 0 THEN
-	nDataBufferMaxIndex := buffer_size - 1;	
-END_IF]]></ST>
-        </Implementation>
-      </Set>
-    </Property>
-    <Property Name="buffer_usage" Id="{bbb95211-74e1-4da1-9e2b-be2248fb01e5}">
-      <Declaration><![CDATA[(* Usage of data buffer (0 - 1.0) [1/100%] *)
-PROPERTY PUBLIC buffer_usage : REAL]]></Declaration>
-      <Get Name="Get" Id="{b46d5d51-f7df-45ba-9aab-0d3c72cb9324}">
+      <Get Name="Get" Id="{fc49c7c3-79a6-433f-90e2-834dc5676a7e}">
         <Declaration><![CDATA[VAR
 END_VAR
 ]]></Declaration>
@@ -72,58 +39,24 @@ END_VAR
         </Implementation>
       </Get>
     </Property>
-    <Property Name="data_def_structure_name" Id="{12d15a2c-bf0d-4db7-a907-7cebd338c4d6}">
-      <Declaration><![CDATA[(* Structure name for each data model *)
-PROPERTY PUBLIC data_def_structure_name : Tc2_System.T_MaxString]]></Declaration>
-      <Get Name="Get" Id="{ebda072e-3d15-41ca-8ab8-cbbe755d7e35}">
-        <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[]]></ST>
-        </Implementation>
-      </Get>
-      <Set Name="Set" Id="{374779eb-84af-449b-b1d1-d49d94a7b136}">
-        <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[sSchemaName := data_def_structure_name;]]></ST>
-        </Implementation>
-      </Set>
-    </Property>
-    <Property Name="db_table_name" Id="{457088bd-30e0-4a96-b934-15df6743d6b6}">
-      <Declaration><![CDATA[(* Database table(or measurement) name to which the data is inserted. *)
-PROPERTY PUBLIC db_table_name : Tc2_System.T_MaxString]]></Declaration>
-      <Get Name="Get" Id="{4d8d5759-a539-49cb-92e4-0c653a06c4e1}">
-        <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[]]></ST>
-        </Implementation>
-      </Get>
-      <Set Name="Set" Id="{5583acd3-dff8-4ba3-acf1-2446e6b0a828}">
-        <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[sMeasurementName := db_table_name;]]></ST>
-        </Implementation>
-      </Set>
-    </Property>
     <Method Name="FB_init" Id="{60fdb3e5-25f4-4374-8251-80149f28a778}">
       <Declaration><![CDATA[METHOD FB_init : BOOL
 VAR_INPUT
 	bInitRetains : BOOL; // if TRUE, the retain variables are initialized (warm start / cold start)
 	bInCopyCode : BOOL;  // if TRUE, the instance afterwards gets moved into the copy code (online change)
-	buffer_pointer :PVOID; // The pointer to data buffer that represent array of structured variable for bulk insert. 
 	recorder	:IRecordDB; // IRecordDB is a interface class of database connection endpoint object.
+	buffer_pointer	: PVOID;
+	buffer_size		: UDINT;
+	buffer_array_size : UDINT;
 END_VAR
+
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[_buffer_pointer := buffer_pointer;
-_recorder := recorder;]]></ST>
+        <ST><![CDATA[_recorder := recorder;
+_buffer_pointer := buffer_pointer;
+_buffer_byte_size := buffer_size;
+_buffer_array_size := buffer_array_size;
+_structure_size := _buffer_byte_size / _buffer_array_size;]]></ST>
       </Implementation>
     </Method>
     <Property Name="index" Id="{14045ef6-f59e-4a14-bab6-425c44445155}">
@@ -138,14 +71,14 @@ END_VAR
         </Implementation>
       </Get>
     </Property>
-    <Property Name="maximum_chunk_size" Id="{02c2c686-c7db-499b-a50c-3e861736b577}">
-      <Declaration><![CDATA[PROPERTY PUBLIC maximum_chunk_size : UDINT]]></Declaration>
+    <Property Name="max_chunk_size" Id="{02c2c686-c7db-499b-a50c-3e861736b577}">
+      <Declaration><![CDATA[PROPERTY PUBLIC max_chunk_size : UDINT]]></Declaration>
       <Get Name="Get" Id="{0baff072-67eb-4a7c-8fad-76d523574483}">
         <Declaration><![CDATA[VAR
 END_VAR
 ]]></Declaration>
         <Implementation>
-          <ST><![CDATA[maximum_chunk_size := max_chunk_size;]]></ST>
+          <ST><![CDATA[max_chunk_size := _max_chunk_size;]]></ST>
         </Implementation>
       </Get>
       <Set Name="Set" Id="{59369926-4939-4df1-910f-88ccb0b731a6}">
@@ -153,18 +86,18 @@ END_VAR
 END_VAR
 ]]></Declaration>
         <Implementation>
-          <ST><![CDATA[max_chunk_size := maximum_chunk_size;]]></ST>
+          <ST><![CDATA[_max_chunk_size := max_chunk_size;]]></ST>
         </Implementation>
       </Set>
     </Property>
-    <Property Name="minimum_chunk_size" Id="{7194ace4-c543-4d3b-bb4c-7732e82ecf0f}">
-      <Declaration><![CDATA[PROPERTY PUBLIC minimum_chunk_size : UDINT]]></Declaration>
+    <Property Name="min_chunk_size" Id="{7194ace4-c543-4d3b-bb4c-7732e82ecf0f}">
+      <Declaration><![CDATA[PROPERTY PUBLIC min_chunk_size : UDINT]]></Declaration>
       <Get Name="Get" Id="{a7346a3e-d6df-4d67-acd9-15108b0b7d1f}">
         <Declaration><![CDATA[VAR
 END_VAR
 ]]></Declaration>
         <Implementation>
-          <ST><![CDATA[minimum_chunk_size := min_chunk_size;]]></ST>
+          <ST><![CDATA[min_chunk_size := _min_chunk_size;]]></ST>
         </Implementation>
       </Get>
       <Set Name="Set" Id="{bf381183-3550-45b7-9d0d-d87b431cae4d}">
@@ -172,7 +105,7 @@ END_VAR
 END_VAR
 ]]></Declaration>
         <Implementation>
-          <ST><![CDATA[min_chunk_size := minimum_chunk_size;
+          <ST><![CDATA[_min_chunk_size := min_chunk_size;
 ]]></ST>
         </Implementation>
       </Set>
@@ -210,30 +143,79 @@ END_VAR
         </Implementation>
       </Set>
     </Property>
+    <Property Name="SQL_parameters" Id="{2eaf2441-9d12-4ef2-ae85-40c278777d68}">
+      <Declaration><![CDATA[{warning 'add property implementation'}
+PROPERTY SQL_parameters : REFERENCE TO sql_parameters
+]]></Declaration>
+      <Get Name="Get" Id="{67cb16a1-8709-4f59-945a-b531330fca7a}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[SQL_parameters REF= _sql_parameters;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="structure_name" Id="{900b0c23-47dd-4f6e-9680-a5bd6f305cea}">
+      <Declaration><![CDATA[{warning 'add property implementation'}
+PROPERTY structure_name : Tc2_System.T_MaxString
+]]></Declaration>
+      <Get Name="Get" Id="{37b366f7-321c-4764-91de-4e4f5f423a15}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[structure_name := _structure_name;]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{2fb20688-c32a-49b3-9f21-28e8605ec7e6}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[_structure_name := structure_name;]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
     <Method Name="write" Id="{4d6a4f57-2187-4032-b3a4-3e31e3263b61}">
       <Declaration><![CDATA[(*The method to write to database through data buffer with queue.*)
 {warning 'add method implementation '}
 METHOD write : BOOL // Return true if data is put on buffer queue successfully.
 VAR_INPUT
-	input_data	: T_Arg;	// Set the measured data. It should be same data type as item of data buffer that is set at "buffer_pointer" on "FB_init" constructor.
+	input_data	: PVOID;	// Set the measured data. It should be same data type as item of data buffer that is set at "buffer_pointer" on "FB_init" constructor.
 END_VAR
 VAR
 	gCurrentData	:T_Arg;
 	pCurrentBufferPointer : PVOID;
-	work_data_body  :DbInsertCommand;
+	work_data_body  :ChunkCommand;
 	nTaskIdx: DINT;
 	queue_input_flag: BOOL;
 END_VAR
-]]></Declaration>
+VAR_INST
+// Start point time
+	start_time		: ULINT;
+	start_data 		: T_Arg;
+
+	nCycleTime		: UDINT;					// PLC task cycle time setting(in 100ns)
+	data_size		: UDINT := 1;				// record data size
+	accumulated_amount		: UDINT := 0;		// buffer usage
+	last_data_count	: UDINT := 0;
+	
+	start_index		: UDINT;
+	_avalable_buffer_size	:DINT;
+	diff_target		: REAL;
+	pid_ope			: REAL;	
+	chunk_size 		: UDINT;
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[IF _recorder = 0 THEN
 	write := FALSE;
 	RETURN;
 END_IF
 
-pCurrentBufferPointer := _buffer_pointer + input_data.cbLen * _current_index;
-MEMCPY(pCurrentBufferPointer, input_data.pData, input_data.cbLen);
-gCurrentData := F_BIGTYPE(pData := pCurrentBufferPointer, cbLen := input_data.cbLen);
+pCurrentBufferPointer := _buffer_pointer + _structure_size * _current_index;
+MEMCPY(pCurrentBufferPointer, input_data, _structure_size);
+gCurrentData := F_BIGTYPE(pData := pCurrentBufferPointer, cbLen := _structure_size);
 
 IF _current_index = start_index THEN
 	start_time := F_GetSystemTime();
@@ -242,12 +224,12 @@ END_IF
 
 queue_input_flag := FALSE;
 
-IF _next_index <= _current_index OR _current_index >= nDataBufferMaxIndex THEN
+IF _next_index <= _current_index OR _current_index >= _buffer_array_size THEN
 	//max_chunk_size := nDataBufferMaxIndex + 1;
 	// put_data
 	IF NOT _recorder.queue.full THEN
 		data_size := _current_index - start_index + 1;
-		_avalable_buffer_size := UDINT_TO_DINT(nDataBufferMaxIndex) - UDINT_TO_DINT(accumulated_amount) +1;
+		_avalable_buffer_size := UDINT_TO_DINT(_buffer_array_size) - UDINT_TO_DINT(accumulated_amount) +1;
 		IF _avalable_buffer_size < UDINT_TO_DINT(data_size) AND _avalable_buffer_size > 0 THEN
 			data_size := DINT_TO_UDINT(_avalable_buffer_size);
 		ELSIF _avalable_buffer_size <= 0 THEN
@@ -264,13 +246,14 @@ IF _next_index <= _current_index OR _current_index >= nDataBufferMaxIndex THEN
 			END_IF
 		END_IF
 		
-		work_data_body.data_body := start_data;
+		work_data_body.start_pointer := start_data.pData;
 		work_data_body.start_time := start_time;
 		work_data_body.cycle_time_100ns := nCycleTime;
 		work_data_body.chunk_size := data_size;
-		work_data_body.MeasurementName := sMeasurementName;
-		work_data_body.SchemaName := sSchemaName;
 		work_data_body.accumulated_amount REF= accumulated_amount;
+		work_data_body.structure_size := _structure_size;
+		work_data_body.structure_name := _structure_name;
+		work_data_body.sql_parameters := _sql_parameters;
 		// queue in
 		_recorder.queue.put(work_data_body);
 		start_index := _current_index + 1;
@@ -282,14 +265,14 @@ END_IF
 IF last_data_count <> accumulated_amount OR queue_input_flag THEN
 	(*Re-calculate chunk size when amount of buffered data is changed including dequeued by recorder.*)
 	// calculate next index
-	_buffer_usage := UDINT_TO_REAL(accumulated_amount) / UDINT_TO_REAL(nDataBufferMaxIndex + 1);
-	diff_target := UDINT_TO_REAL(max_chunk_size) * _buffer_usage;
-	pid_ope := UDINT_TO_REAL(min_chunk_size) + diff_target;
+	_buffer_usage := UDINT_TO_REAL(accumulated_amount) / UDINT_TO_REAL(_buffer_array_size + 1);
+	diff_target := UDINT_TO_REAL(_max_chunk_size) * _buffer_usage;
+	pid_ope := UDINT_TO_REAL(_min_chunk_size) + diff_target;
 	chunk_size := REAL_TO_UDINT(pid_ope);
-	IF chunk_size < min_chunk_size OR pid_ope < 0 THEN
-		chunk_size := min_chunk_size;
-	ELSIF chunk_size > max_chunk_size THEN
-		chunk_size := max_chunk_size;
+	IF chunk_size < _min_chunk_size OR pid_ope < 0 THEN
+		chunk_size := _min_chunk_size;
+	ELSIF chunk_size > _max_chunk_size THEN
+		chunk_size := _max_chunk_size;
 	END_IF
 	//chunk_size := minimum_chunk_size;
 	_next_index := _current_index + chunk_size;
@@ -297,7 +280,7 @@ END_IF
 
 last_data_count := accumulated_amount;
 
-IF _current_index < nDataBufferMaxIndex THEN
+IF _current_index < _buffer_array_size THEN
 	_current_index := _current_index + 1;
 ELSE
 	_current_index := 0;
@@ -311,44 +294,27 @@ write := TRUE;]]></ST>
     <LineIds Name="BufferedRecord">
       <LineId Id="9" Count="0" />
     </LineIds>
-    <LineIds Name="BufferedRecord.buffer_size.Get">
-      <LineId Id="2" Count="0" />
-    </LineIds>
-    <LineIds Name="BufferedRecord.buffer_size.Set">
-      <LineId Id="5" Count="2" />
-    </LineIds>
     <LineIds Name="BufferedRecord.buffer_usage.Get">
       <LineId Id="2" Count="0" />
     </LineIds>
-    <LineIds Name="BufferedRecord.data_def_structure_name.Get">
-      <LineId Id="2" Count="0" />
-    </LineIds>
-    <LineIds Name="BufferedRecord.data_def_structure_name.Set">
-      <LineId Id="2" Count="0" />
-    </LineIds>
-    <LineIds Name="BufferedRecord.db_table_name.Get">
-      <LineId Id="2" Count="0" />
-    </LineIds>
-    <LineIds Name="BufferedRecord.db_table_name.Set">
-      <LineId Id="2" Count="0" />
-    </LineIds>
     <LineIds Name="BufferedRecord.FB_init">
-      <LineId Id="7" Count="0" />
       <LineId Id="15" Count="0" />
+      <LineId Id="25" Count="2" />
+      <LineId Id="30" Count="0" />
     </LineIds>
     <LineIds Name="BufferedRecord.index.Get">
       <LineId Id="2" Count="0" />
     </LineIds>
-    <LineIds Name="BufferedRecord.maximum_chunk_size.Get">
+    <LineIds Name="BufferedRecord.max_chunk_size.Get">
       <LineId Id="2" Count="0" />
     </LineIds>
-    <LineIds Name="BufferedRecord.maximum_chunk_size.Set">
+    <LineIds Name="BufferedRecord.max_chunk_size.Set">
       <LineId Id="2" Count="0" />
     </LineIds>
-    <LineIds Name="BufferedRecord.minimum_chunk_size.Get">
+    <LineIds Name="BufferedRecord.min_chunk_size.Get">
       <LineId Id="2" Count="0" />
     </LineIds>
-    <LineIds Name="BufferedRecord.minimum_chunk_size.Set">
+    <LineIds Name="BufferedRecord.min_chunk_size.Set">
       <LineId Id="2" Count="0" />
       <LineId Id="5" Count="0" />
     </LineIds>
@@ -359,6 +325,15 @@ write := TRUE;]]></ST>
       <LineId Id="2" Count="0" />
     </LineIds>
     <LineIds Name="BufferedRecord.recorder.Set">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="BufferedRecord.SQL_parameters.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="BufferedRecord.structure_name.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="BufferedRecord.structure_name.Set">
       <LineId Id="2" Count="0" />
     </LineIds>
     <LineIds Name="BufferedRecord.write">
@@ -372,7 +347,12 @@ write := TRUE;]]></ST>
       <LineId Id="519" Count="0" />
       <LineId Id="522" Count="0" />
       <LineId Id="517" Count="1" />
-      <LineId Id="461" Count="9" />
+      <LineId Id="461" Count="3" />
+      <LineId Id="467" Count="0" />
+      <LineId Id="574" Count="0" />
+      <LineId Id="576" Count="0" />
+      <LineId Id="556" Count="0" />
+      <LineId Id="468" Count="2" />
       <LineId Id="537" Count="0" />
       <LineId Id="472" Count="4" />
       <LineId Id="514" Count="0" />

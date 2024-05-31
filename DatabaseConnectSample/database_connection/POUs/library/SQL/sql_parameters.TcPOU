@@ -1,0 +1,240 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="sql_parameters" Id="{733fc625-5004-4381-879d-5fd7fccfb98f}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK sql_parameters IMPLEMENTS InterfaceSQLParameters
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	_parameter : ARRAY [1..DbLibParam.MAX_COLUMN_NUM] OF ST_ExpParameter;
+	_table_name : T_MaxString;
+	_p_data : PVOID;
+	_cb_data : UDINT;
+END_VAR
+VAR PERSISTENT
+	current_column_index : UDINT := 0;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="add_column" Id="{3b73a0cd-b383-44c6-a93e-cf5898849a7a}">
+      <Declaration><![CDATA[{warning 'add method implementation '}
+METHOD add_column : BOOL
+VAR_INPUT
+	sParaName : T_MaxString;
+	eParaType : E_ExpParameterType;
+	nParaSize : UDINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF DbLibParam.MAX_COLUMN_NUM <= current_column_index THEN
+	add_column := FALSE;
+	RETURN;
+END_IF 
+current_column_index := current_column_index + 1;
+_parameter[current_column_index].sParaName := sParaName;
+_parameter[current_column_index].eParaType := eParaType;
+_parameter[current_column_index].nParaSize := nParaSize;
+add_column := TRUE;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="cbData" Id="{b17533ce-5c5e-4d02-8687-221f6a6deaa5}">
+      <Declaration><![CDATA[{warning 'add property implementation'}
+PROPERTY cbData : UDINT
+]]></Declaration>
+      <Get Name="Get" Id="{55720e52-3e48-4e81-9fcb-fd354efa472a}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[cbData := _cb_data;]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{7a4034be-c45d-4e8c-a129-31a067bb62d7}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[_cb_data := cbData;]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+    <Property Name="cbParameters" Id="{6ec10b35-7838-4ddb-a63f-45a5ed1677e7}">
+      <Declaration><![CDATA[{warning 'add property implementation'}
+PROPERTY cbParameters : UDINT
+]]></Declaration>
+      <Get Name="Get" Id="{7e3b93c9-7202-4872-b722-392873fe6049}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[IF current_column_index = 0 THEN
+	cbParameters := 0;
+ELSE
+	cbParameters := SIZEOF(_parameter[1]) * current_column_index;
+END_IF
+]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="column_num" Id="{a64ad4a4-be4f-43db-b542-33e773d74a7f}">
+      <Declaration><![CDATA[{warning 'add property implementation'}
+PROPERTY column_num : UDINT
+]]></Declaration>
+      <Get Name="Get" Id="{cff8c15a-81b2-4296-a657-71990fd63ecd}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[column_num := current_column_index;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="insert_query_string" Id="{e09d6d70-0c52-455b-ac7b-cf616cbdfa61}">
+      <Declaration><![CDATA[{warning 'add property implementation'}
+PROPERTY insert_query_string : Tc2_System.T_MaxString
+]]></Declaration>
+      <Get Name="Get" Id="{8b0c9427-cca9-4494-af85-d8b8e32748b2}">
+        <Declaration><![CDATA[VAR
+	i : UDINT;
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[insert_query_string := 'INSERT INTO (';
+FOR i := 1 TO current_column_index DO
+	IF i > 1 THEN
+		insert_query_string := CONCAT(insert_query_string,', ');	
+	END_IF
+	insert_query_string := CONCAT(insert_query_string,_parameter[i].sParaName);
+END_FOR
+insert_query_string := CONCAT(insert_query_string, ') VALUES (');
+FOR i := 1 TO current_column_index DO
+	IF i > 1 THEN
+		insert_query_string := CONCAT(insert_query_string,', ');
+	END_IF
+	insert_query_string := CONCAT(insert_query_string,'{');
+	insert_query_string := CONCAT(insert_query_string,_parameter[i].sParaName);
+	insert_query_string := CONCAT(insert_query_string,'}');
+END_FOR
+insert_query_string := CONCAT(insert_query_string, ')');]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="pData" Id="{c3313b35-5ea9-4b65-8028-8f7ae4095e68}">
+      <Declaration><![CDATA[{warning 'add property implementation'}
+PROPERTY pData : PVOID
+]]></Declaration>
+      <Get Name="Get" Id="{9a654a41-ee0a-4c0f-a77d-c77606019674}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[pData := _p_data;]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{4c3a6f50-5687-4ae8-a106-e397b5b3b534}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[_p_data := pData;]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+    <Property Name="pParameters" Id="{dd20c012-0a16-4b1b-b2e9-16cd13f4d32a}">
+      <Declaration><![CDATA[{warning 'add property implementation'}
+PROPERTY pParameters : PVOID
+]]></Declaration>
+      <Get Name="Get" Id="{ff466214-aa18-493c-bad6-022db1cbd49c}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[pParameters := ADR(_parameter[1]);]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="table_name" Id="{e38de48c-6b0f-45b6-8fa4-67575a9cf6f9}">
+      <Declaration><![CDATA[{warning 'add property implementation'}
+PROPERTY table_name : Tc2_System.T_MaxString
+]]></Declaration>
+      <Get Name="Get" Id="{f85e7fa5-a341-4565-982c-4e4bcc4b1ec2}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[table_name := _table_name;]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{6d1eb162-e420-460a-a5da-2d2fd4bb40c2}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[_table_name := table_name;]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+    <LineIds Name="sql_parameters">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="sql_parameters.add_column">
+      <LineId Id="9" Count="0" />
+      <LineId Id="12" Count="0" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="15" Count="0" />
+      <LineId Id="8" Count="0" />
+      <LineId Id="23" Count="1" />
+      <LineId Id="13" Count="1" />
+    </LineIds>
+    <LineIds Name="sql_parameters.cbData.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="sql_parameters.cbData.Set">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="sql_parameters.cbParameters.Get">
+      <LineId Id="5" Count="1" />
+      <LineId Id="8" Count="1" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="sql_parameters.column_num.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="sql_parameters.insert_query_string.Get">
+      <LineId Id="2" Count="0" />
+      <LineId Id="12" Count="0" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="20" Count="0" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="14" Count="1" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="21" Count="3" />
+      <LineId Id="26" Count="0" />
+      <LineId Id="25" Count="0" />
+      <LineId Id="27" Count="0" />
+      <LineId Id="6" Count="0" />
+      <LineId Id="11" Count="0" />
+    </LineIds>
+    <LineIds Name="sql_parameters.pData.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="sql_parameters.pData.Set">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="sql_parameters.pParameters.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="sql_parameters.table_name.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="sql_parameters.table_name.Set">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>
