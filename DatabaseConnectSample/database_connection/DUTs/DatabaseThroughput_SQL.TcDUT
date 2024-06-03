@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="DatabaseThroughput_SQL" Id="{9e9a57af-d36a-4a8a-b74d-c3b24a6e75b2}">
+    <Declaration><![CDATA[TYPE DatabaseThroughput_SQL:
+STRUCT
+    datetime : ULINT; // UNIX epoch
+    db_insert_queue_count: UDINT; // キューインされた一括インサート予定のコマンド数
+    current_index: UDINT; // 現在のデータバッファの開始インデックス
+    next_index: UDINT; // 次回インサートコマンドが発行される予定のバッファの終端インデックス
+	buffer_usage: REAL; // バッファの使用率（全バッファサイズうのうちインサートコマンドが発行待ちのデータ数）
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

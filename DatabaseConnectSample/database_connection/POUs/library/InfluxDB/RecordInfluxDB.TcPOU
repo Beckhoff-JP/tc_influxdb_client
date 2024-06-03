@@ -32,15 +32,14 @@ VAR
     fbNoSqlQueryEvt 					: FB_NoSQLQueryEvt(sNetID := '', tTimeout := T#15S); // functionblock to execute queries
 	
 	// Variables for queue feature
-	get_data 			: DbInsertCommand;
+	get_data 			: ChunkCommand;
 	State				: E_DbLogState;
-	nDBID				: UDINT;
+	_dbid				: UDINT;
 	_queue : dequeue;	
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[
-CASE State OF
+      <ST><![CDATA[CASE State OF
 
 	E_DbLogState.idle:
 		
@@ -57,10 +56,10 @@ CASE State OF
 			IF get_data.chunk_size > 0 THEN
 				fbNoSQLQueryBuilder_TimeSeriesDB.pQueryOptions := ADR(QueryOption_TSDB_Insert);
 				fbNoSQLQueryBuilder_TimeSeriesDB.cbQueryOptions := SIZEOF(QueryOption_TSDB_Insert);    
-				QueryOption_TSDB_Insert.sTableName := get_data.MeasurementName;
-				QueryOption_TSDB_Insert.sDataType := get_data.SchemaName;
-				QueryOption_TSDB_Insert.pSymbol := get_data.data_body.pData;
-				QueryOption_TSDB_Insert.cbSymbol := get_data.data_body.cbLen * get_data.chunk_size;
+				QueryOption_TSDB_Insert.sTableName := get_data.sql_parameters.table_name;
+				QueryOption_TSDB_Insert.sDataType := get_data.structure_name;
+				QueryOption_TSDB_Insert.pSymbol := get_data.start_pointer;
+				QueryOption_TSDB_Insert.cbSymbol := get_data.structure_size * get_data.chunk_size;
 				QueryOption_TSDB_Insert.nDataCount := get_data.chunk_size;
 				QueryOption_TSDB_Insert.nStartTimestamp := get_data.start_time;
 				QueryOption_TSDB_Insert.nCycleTime := get_data.cycle_time_100ns; // (in 100 ns)
@@ -71,7 +70,7 @@ CASE State OF
 
 	E_DbLogState.writing:
 	
-		IF fbNoSqlQueryEvt.Execute(1, fbNoSQLQueryBuilder_TimeSeriesDB) THEN
+		IF fbNoSqlQueryEvt.Execute(_dbid, fbNoSQLQueryBuilder_TimeSeriesDB) THEN
 			IF fbNoSqlQueryEvt.bError THEN
 				TcResult := fbNoSqlQueryEvt.ipTcResult;                
 				State := E_DbLogState.error;
@@ -91,37 +90,18 @@ CASE State OF
 END_CASE
 ]]></ST>
     </Implementation>
-    <Method Name="FB_init" Id="{905bd65a-b44d-4455-a9bf-7151bf36bcf4}">
+    <Method Name="FB_init" Id="{4e7c5051-b1cc-423d-9c05-60b0eab25d65}">
       <Declaration><![CDATA[METHOD FB_init : BOOL
 VAR_INPUT
 	bInitRetains : BOOL; // if TRUE, the retain variables are initialized (warm start / cold start)
 	bInCopyCode : BOOL;  // if TRUE, the instance afterwards gets moved into the copy code (online change)
-	DBID			:UDINT; // Database ID for TF6420
+	DBID		: UDINT; //Database ID for TF6420 configurator
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[nDBID := DBID;]]></ST>
+        <ST><![CDATA[_dbid := DBID;]]></ST>
       </Implementation>
     </Method>
-    <Property Name="query" Id="{7e57657a-d85c-4631-883e-c305de006ca2}">
-      <Declaration><![CDATA[PROPERTY query : STRING(512)]]></Declaration>
-      <Get Name="Get" Id="{4fd43ba5-1758-4a54-88af-ba966b369766}">
-        <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[]]></ST>
-        </Implementation>
-      </Get>
-      <Set Name="Set" Id="{9f86d508-39b1-4975-a9ac-17a41a04a9c6}">
-        <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[]]></ST>
-        </Implementation>
-      </Set>
-    </Property>
     <Property Name="queue" Id="{9e0e16f0-3d31-4150-b701-80b92abe9211}">
       <Declaration><![CDATA[(*Property of database command queue*)
 {warning 'add property implementation'}
@@ -146,24 +126,11 @@ END_VAR
       </Set>
     </Property>
     <LineIds Name="RecordInfluxDB">
-      <LineId Id="2749" Count="0" />
-      <LineId Id="2293" Count="10" />
-      <LineId Id="2305" Count="1" />
-      <LineId Id="2308" Count="0" />
-      <LineId Id="2843" Count="0" />
-      <LineId Id="2846" Count="9" />
-      <LineId Id="2845" Count="0" />
-      <LineId Id="2319" Count="22" />
+      <LineId Id="2928" Count="48" />
       <LineId Id="9" Count="0" />
     </LineIds>
     <LineIds Name="RecordInfluxDB.FB_init">
-      <LineId Id="7" Count="0" />
-    </LineIds>
-    <LineIds Name="RecordInfluxDB.query.Get">
-      <LineId Id="2" Count="0" />
-    </LineIds>
-    <LineIds Name="RecordInfluxDB.query.Set">
-      <LineId Id="2" Count="0" />
+      <LineId Id="8" Count="0" />
     </LineIds>
     <LineIds Name="RecordInfluxDB.queue.Get">
       <LineId Id="2" Count="0" />

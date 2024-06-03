@@ -3,8 +3,8 @@
   <POU Name="SampleProgram" Id="{54c36bd4-1835-4b4c-be1e-05e28c01780d}" SpecialFunc="None">
     <Declaration><![CDATA[(*
 
-Record performance data to influxDB
---------------------------------------------------
+Record performance data to influxDB and ANY SQL database
+--------------------------------------------------------
 
 
 * Objects
@@ -25,7 +25,8 @@ History
 	:header: Rev., Date,Description
 	
 	0, 2023-01-10,Initial edition
-	1. 2023-02-27,Add reStructuredText
+	1, 2023-02-27,Add reStructuredText
+	2, 2024-06-01,Add SQL database support
 	  
 *)
 
@@ -33,15 +34,18 @@ PROGRAM SampleProgram
 
 VAR CONSTANT
 	RECORD_DATA_MAX_INDEX: UDINT := 49999;
-	TARGET_DBID: UDINT := 1;
 END_VAR
 
 VAR
 	
+	// Initial
+	initialized : BOOL;
+	
+	// Datetime utilities
+	fbDtUtil : FB_DatetimeUtilities;
+
 	// PLC System parameters
-     fbGetCurTaskIdx  : GETCURTASKINDEX;
-
-
+    fbGetCurTaskIdx  : GETCURTASKINDEX;
 	test_timer :TON; // Inclese workload rate
 	bExecuting :BOOL;
 	j:UDINT := 0;
@@ -50,114 +54,99 @@ VAR
 	
 	process_timer :TON; // Process time
 
-	// For cycric insert
-	DatabaseThroughputRecordData 		:DatabaseThroughput;	// for insert dataset
-	DatabaseThroughputRecordBuffer 		:ARRAY [0..DBLibParam.DATA_BUFFER_SIZE + 10] OF DatabaseThroughput;
-	fbThroughputDataCommandBuffer		:BufferedRecord(ADR(DatabaseThroughputRecordBuffer), GVL.fbInfluxDBRecorder);		// record controller
+	// for InfluxDB
 
-	// For direct insert
-	DataBaseProcessModeRecordData	:ProcessModeData;
-	fbProcessModeBuffer					:DirectRecord(GVL.fbInfluxDBRecorder);
+	// Record data buffer
+	DatabaseThroughputRecordData 		:DatabaseThroughput;	// for insert dataset
+	DatabaseThroughputRecordBuffer 		:ARRAY [0..DBLibParam.DATA_BUFFER_SIZE] OF DatabaseThroughput;
+
+	fbThroughputRecorder_influxDB		:BufferedRecord(
+												GVL.fbInfluxDBRecorder, 
+												ADR(DatabaseThroughputRecordBuffer), 
+												SIZEOF(DatabaseThroughputRecordBuffer),
+												DBLibParam.DATA_BUFFER_SIZE
+										);		// record controller
+
+	// For SQL DB
+
+	// Record data buffer
+	DatabaseThroughputRecordData_SQL 		:DatabaseThroughput_SQL;	// for insert dataset
+	DatabaseThroughputRecordBuffer_SQL 		:ARRAY [0..DBLibParam.DATA_BUFFER_SIZE] OF DatabaseThroughput_SQL;
+
+	fbThroughputRecorder_SQLDB			:BufferedRecord(
+												GVL.fbSQLRecorder, 
+												ADR(DatabaseThroughputRecordBuffer_SQL), 
+												SIZEOF(DatabaseThroughputRecordBuffer_SQL),
+												DBLibParam.DATA_BUFFER_SIZE
+										);		// record controller
 
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[ts_database_metrics();
-ts_process_mode();
-]]></ST>
-    </Implementation>
-    <Action Name="ts_database_metrics" Id="{8cc304ee-f7f2-4ae7-91a1-48a016e700b9}">
-      <Implementation>
-        <ST><![CDATA[(*
+      <ST><![CDATA[(* Initialize*)
+IF NOT initialized THEN
+	// Influx DB
+	fbThroughputRecorder_influxDB.structure_name := 'DatabaseThroughput'; // Measurement name
+	fbThroughputRecorder_influxDB.SQL_parameters.table_name := 'DatabaseThroughput'; // Structure type name
+	// SQL DB
+	fbThroughputRecorder_SQLDB.structure_name := 'DatabaseThroughput'; // Measurement name
+	fbThroughputRecorder_SQLDB.SQL_parameters.table_name := 'database_throughput';
+	fbThroughputRecorder_SQLDB.SQL_parameters.add_column('datetime', E_ExpParameterType.Int64, SIZEOF(DatabaseThroughputRecordData_SQL.datetime));
+	fbThroughputRecorder_SQLDB.SQL_parameters.add_column('db_insert_queue_count', E_ExpParameterType.Int32, SIZEOF(DatabaseThroughputRecordData_SQL.db_insert_queue_count));
+	fbThroughputRecorder_SQLDB.SQL_parameters.add_column('current_index', E_ExpParameterType.Int32, SIZEOF(DatabaseThroughputRecordData_SQL.current_index));
+	fbThroughputRecorder_SQLDB.SQL_parameters.add_column('next_index', E_ExpParameterType.Int32, SIZEOF(DatabaseThroughputRecordData_SQL.next_index));
+	fbThroughputRecorder_SQLDB.SQL_parameters.add_column('buffer_usage', E_ExpParameterType.Float32, SIZEOF(DatabaseThroughputRecordData_SQL.buffer_usage));
+	initialized := TRUE;
+END_IF
+
+
+fbDtUtil();
+
+
+(*
 	Database Throughput data insert buffer
 *)
 
 
 (* Data set here *)
+// cyclic record > influxdb
 
 // Tag Data
 DatabaseThroughputRecordData.machine_id := 'machine-1';
 DatabaseThroughputRecordData.job_id := 'db_throughput';
 // Field data
 DatabaseThroughputRecordData.db_insert_queue_count := GVL.fbInfluxDBRecorder.queue.queue_usage;
-DatabaseThroughputRecordData.current_index := fbThroughputDataCommandBuffer.index;
-DatabaseThroughputRecordData.next_index := fbThroughputDataCommandBuffer.next_index;
-DatabaseThroughputRecordData.buffer_usage := fbThroughputDataCommandBuffer.buffer_usage;
+DatabaseThroughputRecordData.current_index := fbThroughputRecorder_influxDB.index;
+DatabaseThroughputRecordData.next_index := fbThroughputRecorder_influxDB.next_index;
+DatabaseThroughputRecordData.buffer_usage := fbThroughputRecorder_influxDB.buffer_usage;
 
 (* Queue set *)
+//fbThroughputRecorder_influxDB.write(ADR(DatabaseThroughputRecordData));
 
-// Insert command queue
-fbThroughputDataCommandBuffer.db_table_name := 'DatabaseThroughput'; // Measurement name
-fbThroughputDataCommandBuffer.data_def_structure_name := 'DatabaseThroughput'; // Structure type name
+// cyclic record > SQLdb
+DatabaseThroughputRecordData_SQL.datetime := fbDtUtil.Filetime_To_UnixT(F_GetSystemTime());
+DatabaseThroughputRecordData_SQL.db_insert_queue_count := GVL.fbSQLRecorder.queue.queue_usage;
+DatabaseThroughputRecordData_SQL.current_index := fbThroughputRecorder_SQLDB.index;
+DatabaseThroughputRecordData_SQL.next_index := fbThroughputRecorder_SQLDB.next_index;
+DatabaseThroughputRecordData_SQL.buffer_usage := fbThroughputRecorder_SQLDB.buffer_usage;
 
-// cyclic record
-fbThroughputDataCommandBuffer.write(
-	input_data := F_BIGTYPE(
-		pData := ADR(DatabaseThroughputRecordData), 
-		cbLen := SIZEOF(DatabaseThroughputRecordData)
-	)
-);]]></ST>
-      </Implementation>
-    </Action>
-    <Action Name="ts_process_mode" Id="{daa9f062-06e6-4077-b528-c0735d8c4a4a}">
-      <Implementation>
-        <ST><![CDATA[
-// Add PLC calculation stress step by step.
-test_timer(IN := NOT test_timer.Q, PT := T#5M);
-
-// Interval flag "On processing"
-process_timer(IN := NOT process_timer.Q, PT := T#3S);
-
-// toggle bExecuting flag ON / OFF 
-bExecuting := (NOT bExecuting AND process_timer.Q) OR (DataBaseProcessModeRecordData.executing AND NOT process_timer.Q);
-
-
-(*Create insert data *)
-
-// Tag Data set
-DataBaseProcessModeRecordData.machine_id := 'machine-1';
-DataBaseProcessModeRecordData.job_id := 'task_info';
-// Field data set
-DataBaseProcessModeRecordData.executing := bExecuting;
-DataBaseProcessModeRecordData.message := Tc2_Standard.CONCAT('LOOP COUNT: ',UDINT_TO_STRING(target));
-
-fbProcessModeBuffer.db_table_name := 'PerformanceData'; // Measurement name
-fbProcessModeBuffer.data_def_structure_name := 'ProcessModeData'; // Structure type name
-
-IF process_timer.Q THEN
-	fbProcessModeBuffer.write(input_data := F_BIGTYPE(
-		pData := ADR(DataBaseProcessModeRecordData), 
-		cbLen := SIZEOF(DataBaseProcessModeRecordData)
-	)
-);
-END_IF
-]]></ST>
-      </Implementation>
-    </Action>
+fbThroughputRecorder_SQLDB.write(ADR(DatabaseThroughputRecordData_SQL));]]></ST>
+    </Implementation>
     <LineIds Name="SampleProgram">
-      <LineId Id="1026" Count="0" />
-      <LineId Id="4334" Count="1" />
-    </LineIds>
-    <LineIds Name="SampleProgram.ts_database_metrics">
-      <LineId Id="137" Count="5" />
-      <LineId Id="163" Count="0" />
-      <LineId Id="143" Count="7" />
-      <LineId Id="164" Count="1" />
-      <LineId Id="151" Count="10" />
-      <LineId Id="66" Count="0" />
-    </LineIds>
-    <LineIds Name="SampleProgram.ts_process_mode">
-      <LineId Id="55" Count="2" />
-      <LineId Id="61" Count="2" />
-      <LineId Id="79" Count="0" />
-      <LineId Id="78" Count="0" />
-      <LineId Id="65" Count="1" />
-      <LineId Id="76" Count="0" />
-      <LineId Id="53" Count="1" />
-      <LineId Id="33" Count="5" />
-      <LineId Id="40" Count="8" />
-      <LineId Id="50" Count="1" />
-      <LineId Id="1" Count="0" />
+      <LineId Id="4574" Count="6" />
+      <LineId Id="4612" Count="1" />
+      <LineId Id="4616" Count="3" />
+      <LineId Id="4583" Count="1" />
+      <LineId Id="4793" Count="2" />
+      <LineId Id="4585" Count="7" />
+      <LineId Id="4712" Count="0" />
+      <LineId Id="4593" Count="10" />
+      <LineId Id="4422" Count="0" />
+      <LineId Id="4621" Count="1" />
+      <LineId Id="4705" Count="0" />
+      <LineId Id="4708" Count="3" />
+      <LineId Id="4706" Count="0" />
+      <LineId Id="4620" Count="0" />
     </LineIds>
   </POU>
 </TcPlcObject>

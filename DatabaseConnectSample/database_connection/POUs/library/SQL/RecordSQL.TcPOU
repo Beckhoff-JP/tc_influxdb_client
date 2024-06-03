@@ -2,79 +2,11 @@
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
   <POU Name="RecordSQL" Id="{c22ca813-56d1-45d3-a2ad-9ac2c556a6da}" SpecialFunc="None">
     <Declaration><![CDATA[(*
-:Author: 
 
-	Takashi Ichihashi Beckhoff Automation co. ltd.
-	
-:Date:
-
-	2023-03-09
-	
-Overview
-==================
-
-
-
-Infosys Link:  `https://infosys.beckhoff.com/content/1033/tf6420_tc3_database_server/8117583755.html?id=5199556541044360835 <https://infosys.beckhoff.com/content/1033/tf6420_tc3_database_server/8117583755.html?id=5199556541044360835>`
-
-Quick start
-======================
-
-As first you have to deine data model that the sampling data to insert to influxDB measurement.  The data models are structured by parent and child that is corresponding data tags and fields on influxDB.
-
-.. code:: DataTag structure
-
-	TYPE DataTag:
-	STRUCT
-		{attribute 'TagName' := 'machine_id'}
-		machine_id : STRING(255); // 設備名
-		{attribute 'TagName' := 'data_type_id'}
-		data_type_id : STRING(255); // 発生イベント種別
-	END_STRUCT
-	END_TYPE	
-
-	
-.. code:: DataField structure
-
-	TYPE PerformanceData EXTENDS DataTag:
-	STRUCT
-		{attribute 'FieldName' := 'plc_task_time'}
-		task_time: UDINT;
-		{attribute 'FieldName' := 'cpu_usage'}
-		cpu_usage: UDINT;
-		{attribute 'FieldName' := 'latency'}
-		latency: UDINT;
-		{attribute 'FieldName' := 'max_latency'}
-		max_latency: UDINT;
-		{attribute 'FieldName' := 'exceed_counter'}
-		exceed_counter: UDINT;
-		{attribute 'FieldName' := 'ec_lost_frames'}
-		ec_lost_frames: UDINT;
-		{attribute 'FieldName' := 'ec_frame_rate'}
-		ec_frame_rate: LREAL;
-		{attribute 'FieldName' := 'ec_lost_q_frame'}
-		ec_lost_q_frames: UDINT;
-		{attribute 'FieldName' := 'ec_q_frame_rate'}
-		ec_q_frame_rate: LREAL;
-		{attribute 'FieldName' := 'executing'}
-		executing: BOOL;
-		{attribute 'FieldName' := 'DB_queue_count'}
-		db_insert_queue_count: UDINT;
-		{attribute 'FieldName' := 'DB_buffer_current_index'}
-		current_index: UDINT;
-		{attribute 'FieldName' := 'DB_buffer_next_index'}
-		next_index: UDINT;
-	
-	END_STRUCT
-	END_TYPE
 	
 *)
 
 FUNCTION_BLOCK RecordSQL IMPLEMENTS IRecordDB
-VAR_INPUT
-	nDBID						: UDINT;					// Database ID for TF6420
-	DB_Parameter				: Tc2_Utilities.T_Arg;
-END_VAR
 VAR_OUTPUT
 	bBusy			: BOOL;	// In writing database
 	bError			: BOOL; // Somthing wrong situation happend
@@ -92,13 +24,15 @@ VAR
 	
 	//for insert samples
 	fbPLCDBCmd: FB_PLCDBCmdEvt(sNetID := '', tTimeout := T#19S);
-	_query								: STRING(512);
-	
+
 	// Variables for queue feature
-	get_data_t 			: T_Arg;
-	get_data 			: DbInsertCommand;
+	get_data 			: ChunkCommand;
 	State				: E_DbLogState;
-	_queue : dequeue;
+	_dbid				: UDINT;
+	_queue 				: dequeue;	
+	_query				: T_MaxString;
+	pParam: PVOID;
+	cbParam: UDINT;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -116,18 +50,22 @@ CASE State OF
 		IF NOT fbPLCDBCmd.bBusy AND _queue.queue_usage > 0 THEN
 			// getting data
 			get_data := _queue.get();
-			State := E_DbLogState.writing;		
+			_query := get_data.sql_parameters.insert_query_string;
+			State := E_DbLogState.writing;
 		END_IF
 
 	E_DbLogState.writing:
+		pParam := get_data.sql_parameters.pParameters;
+		cbParam := get_data.sql_parameters.cbParameters;
+		
 		//Write buffer element to database
-		IF fbPLCDBCmd.Execute(nDBID, 
+		IF fbPLCDBCmd.Execute(_dbid, 
 							ADR(_query), 
 							SIZEOF(_query), 
-							get_data.data_body.pData, 
-							get_data.data_body.cbLen * get_data.chunk_size, 
-							DB_Parameter.pData, 
-							DB_Parameter.cbLen) THEN
+							get_data.start_pointer, 
+							get_data.structure_size * get_data.chunk_size, 
+							pParam, 
+							cbParam) THEN
 			IF fbPLCDBCmd.bError THEN
 				State := E_DbLogState.error;
 			ELSE
@@ -146,25 +84,22 @@ CASE State OF
 END_CASE
 ]]></ST>
     </Implementation>
-    <Property Name="query" Id="{c27af420-79a3-4c17-9de5-9795776e9055}">
-      <Declaration><![CDATA[PROPERTY query : STRING(512)]]></Declaration>
-      <Get Name="Get" Id="{651a9235-26b1-4e78-a03a-bd56be9eaa4a}">
-        <Declaration><![CDATA[VAR
+    <Method Name="FB_init" Id="{f9b530cb-dfd9-430f-9dfa-fe8fa0d8029d}">
+      <Declaration><![CDATA[{warning 'add method implementation '}
+METHOD FB_init : BOOL
+VAR_INPUT
+	(* if TRUE, the retain variables are initialized (warm start / cold start)*)
+	bInitRetains	: BOOL;
+	(* if TRUE, the instance afterwards gets moved into the copy code (online change)*)
+	bInCopyCode	: BOOL;
+	(*Database ID for TF6420 configurator*)
+	DBID	: UDINT;
 END_VAR
 ]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[]]></ST>
-        </Implementation>
-      </Get>
-      <Set Name="Set" Id="{57239635-62be-4167-b083-03e5cdbcae9c}">
-        <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[_query := query;]]></ST>
-        </Implementation>
-      </Set>
-    </Property>
+      <Implementation>
+        <ST><![CDATA[_dbid := DBID;]]></ST>
+      </Implementation>
+    </Method>
     <Property Name="queue" Id="{783f7123-f13b-436b-999f-bb0882697016}">
       <Declaration><![CDATA[{warning 'add property implementation'}
 PROPERTY queue : REFERENCE TO dequeue
@@ -191,8 +126,11 @@ END_VAR
       <LineId Id="3144" Count="0" />
       <LineId Id="2293" Count="10" />
       <LineId Id="2305" Count="1" />
+      <LineId Id="3469" Count="0" />
       <LineId Id="3249" Count="0" />
       <LineId Id="2320" Count="2" />
+      <LineId Id="3505" Count="1" />
+      <LineId Id="3508" Count="0" />
       <LineId Id="2889" Count="0" />
       <LineId Id="2891" Count="0" />
       <LineId Id="3035" Count="5" />
@@ -205,11 +143,8 @@ END_VAR
       <LineId Id="2340" Count="1" />
       <LineId Id="9" Count="0" />
     </LineIds>
-    <LineIds Name="RecordSQL.query.Get">
-      <LineId Id="2" Count="0" />
-    </LineIds>
-    <LineIds Name="RecordSQL.query.Set">
-      <LineId Id="2" Count="0" />
+    <LineIds Name="RecordSQL.FB_init">
+      <LineId Id="12" Count="0" />
     </LineIds>
     <LineIds Name="RecordSQL.queue.Get">
       <LineId Id="2" Count="0" />

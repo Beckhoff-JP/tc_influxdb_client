@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="RecordDataStructureInfo" Id="{8f99dcfa-10ad-4cc7-99bd-66d525e7fc72}">
+    <Declaration><![CDATA[TYPE RecordDataStructureInfo :
+STRUCT
+	structure_pointer : PVOID;
+	structure_size : UDINT;
+	buffer_size :UDINT := DBLibParam.DATA_BUFFER_SIZE;
+	structure_name : T_MaxString;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

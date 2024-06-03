@@ -84,13 +84,16 @@ Requirements:
     <Compile Include="DBWrite.TcTTO">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="DUTs\ChunkCommand.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="DUTs\DatabaseThroughput.TcDUT">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="DUTs\DataTag.TcDUT">
+    <Compile Include="DUTs\DatabaseThroughput_SQL.TcDUT">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="DUTs\DbInsertCommand.TcDUT">
+    <Compile Include="DUTs\DataTag.TcDUT">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="DUTs\E_DbLogState.TcDUT">
@@ -100,6 +103,9 @@ Requirements:
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="DUTs\ProcessModeData.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="DUTs\RecordDataStructureInfo.TcDUT">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="DUTs\SQLPerformanceData.TcDUT">
@@ -119,28 +125,34 @@ Requirements:
     <Compile Include="POUs\DatabaseRecord.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\dequeue.TcPOU">
+    <Compile Include="POUs\library\BufferedRecord.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\BufferedRecord.TcPOU">
+    <Compile Include="POUs\library\dequeue.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\DirectRecord.TcPOU">
+    <Compile Include="POUs\library\InfluxDB\InfluxdbMeasurement.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\IRecordDataQueue.TcIO">
+    <Compile Include="POUs\library\InfluxDB\RecordInfluxDB.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\IRecordDB.TcIO">
+    <Compile Include="POUs\library\interface\IRecordDataQueue.TcIO">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\RecordInfluxDB.TcPOU">
+    <Compile Include="POUs\library\interface\IRecordDB.TcIO">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\library\SQL\FB_DatetimeUtilities.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\library\SQL\sql_parameters.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\library\SQL\RecordSQL.TcPOU">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\SampleProgram.TcPOU">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="POUs\RecordSQL.TcPOU">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Project Information\F_GetCompany.TcPOU">
@@ -163,6 +175,10 @@ Requirements:
     <Folder Include="DUTs" />
     <Folder Include="GVLs" />
     <Folder Include="LibraryBundle" />
+    <Folder Include="POUs\library" />
+    <Folder Include="POUs\library\InfluxDB" />
+    <Folder Include="POUs\library\interface" />
+    <Folder Include="POUs\library\SQL" />
     <Folder Include="Project Information" />
     <Folder Include="Version" />
     <Folder Include="VISUs" />

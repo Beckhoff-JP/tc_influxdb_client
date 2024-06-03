@@ -1,0 +1,125 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="InfluxdbMeasurement" Id="{c9f9009b-7df8-4bfb-a99e-e8b24991e013}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK InfluxdbMeasurement IMPLEMENTS InterfaceSQLParameters
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	_measurement_name :T_MaxString;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="add_column" Id="{0419eaef-2c5b-47fc-8e5d-3814335c2e9d}">
+      <Declaration><![CDATA[{warning 'add method implementation '}
+METHOD add_column : BOOL
+VAR_INPUT
+	paramater	: Tc3_Database.ST_ExpParameter;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="cbParameters" Id="{bc4045ac-7c2d-4492-bd8e-2ff311e120ce}">
+      <Declaration><![CDATA[{warning 'add property implementation'}
+PROPERTY cbParameters : UDINT
+]]></Declaration>
+      <Get Name="Get" Id="{90370096-074c-4890-9887-ad28ceaccc33}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="column_num" Id="{eca81d0f-25e9-489d-b626-e7661f1ef5b1}">
+      <Declaration><![CDATA[{warning 'add property implementation'}
+PROPERTY column_num : UDINT
+]]></Declaration>
+      <Get Name="Get" Id="{ac4d11d5-a034-4aa9-a103-99c2360fd558}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="insert_query_string" Id="{cf42c815-52c3-41aa-9ccf-1faa8ceabf32}">
+      <Declaration><![CDATA[{warning 'add property implementation'}
+PROPERTY insert_query_string : Tc2_System.T_MaxString
+]]></Declaration>
+      <Get Name="Get" Id="{af55dbc7-3de4-4f51-ad95-f44d8e8f24e9}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="pParameters" Id="{0c9c87ed-dce5-4cd8-babb-bf4559332553}">
+      <Declaration><![CDATA[{warning 'add property implementation'}
+PROPERTY pParameters : PVOID
+]]></Declaration>
+      <Get Name="Get" Id="{ceb5108e-6b4b-42c5-910d-6bd42682b381}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="table_name" Id="{1030ae34-ffa9-483a-a2c5-a2dcb663bec2}">
+      <Declaration><![CDATA[{warning 'add property implementation'}
+PROPERTY table_name : Tc2_System.T_MaxString
+]]></Declaration>
+      <Get Name="Get" Id="{ddbc3561-694f-49ba-8d86-494e5c45f136}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[table_name := _measurement_name;]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{f3097ada-6e4b-4019-90c4-b24e93e32951}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[_measurement_name := table_name;]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+    <LineIds Name="InfluxdbMeasurement">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="InfluxdbMeasurement.add_column">
+      <LineId Id="7" Count="0" />
+    </LineIds>
+    <LineIds Name="InfluxdbMeasurement.cbParameters.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="InfluxdbMeasurement.column_num.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="InfluxdbMeasurement.insert_query_string.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="InfluxdbMeasurement.pParameters.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="InfluxdbMeasurement.table_name.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="InfluxdbMeasurement.table_name.Set">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -46,7 +46,7 @@ VAR
 	_queue_size:	UDINT := DbLibParam.COMMAND_QUEUE_BUFFER_SIZE;
 	nWriteIndex: 	UDINT;
 	nReadIndex: 	UDINT;
-	queue_buffer:	ARRAY [0..DbLibParam.COMMAND_QUEUE_BUFFER_SIZE - 1] OF DbInsertCommand;
+	queue_buffer:	ARRAY [0..DbLibParam.COMMAND_QUEUE_BUFFER_SIZE - 1] OF ChunkCommand;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -65,7 +65,7 @@ END_VAR
       </Get>
     </Property>
     <Method Name="get" Id="{8b74c0af-e452-4b04-80b6-4bc8c107a41d}">
-      <Declaration><![CDATA[METHOD get : DbInsertCommand
+      <Declaration><![CDATA[METHOD get : ChunkCommand
 VAR_INPUT
 END_VAR
 ]]></Declaration>
@@ -110,7 +110,7 @@ END_VAR
     <Method Name="put" Id="{bc495a1c-f6bd-4bba-8df0-e2c2c6cddb62}">
       <Declaration><![CDATA[METHOD PUBLIC put : UDINT
 VAR_INPUT
-	lData:	DbInsertCommand;
+	lData:	ChunkCommand;
 END_VAR
 ]]></Declaration>
       <Implementation>

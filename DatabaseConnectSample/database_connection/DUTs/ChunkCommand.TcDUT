@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="ChunkCommand" Id="{c672facb-e20f-41dd-82b0-32493ddf3c8b}">
+    <Declaration><![CDATA[TYPE ChunkCommand :
+STRUCT
+	accumulated_amount: REFERENCE TO UDINT;
+	chunk_size :UDINT;
+	cycle_time_100ns : UDINT;
+	start_time : ULINT;
+	start_pointer : PVOID;
+	structure_size : UDINT;
+	structure_name : T_MaxString;
+	sql_parameters: REFERENCE TO sql_parameters;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>
