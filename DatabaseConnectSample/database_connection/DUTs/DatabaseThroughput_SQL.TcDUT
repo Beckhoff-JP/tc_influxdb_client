@@ -3,16 +3,11 @@
   <DUT Name="DatabaseThroughput_SQL" Id="{9e9a57af-d36a-4a8a-b74d-c3b24a6e75b2}">
     <Declaration><![CDATA[TYPE DatabaseThroughput_SQL:
 STRUCT
-	{attribute 'TagName' := 'machine_id'}
-    datetime : ULINT; // TIMESTAMPTZ型時刻
-	{attribute 'FieldName' := 'DB_queue_count'}
-    db_insert_queue_count: UDINT;
-	{attribute 'FieldName' := 'DB_buffer_current_index'}
-    current_index: UDINT;
-	{attribute 'FieldName' := 'DB_buffer_next_index'}
-    next_index: UDINT;
-	{attribute 'FieldName' := 'DB_buffer_usage'}
-	buffer_usage: REAL;
+    datetime : ULINT; // UNIX epoch
+    db_insert_queue_count: UDINT; // キューインされた一括インサート予定のコマンド数
+    current_index: UDINT; // 現在のデータバッファの開始インデックス
+    next_index: UDINT; // 次回インサートコマンドが発行される予定のバッファの終端インデックス
+	buffer_usage: REAL; // バッファの使用率（全バッファサイズうのうちインサートコマンドが発行待ちのデータ数）
 END_STRUCT
 END_TYPE
 ]]></Declaration>

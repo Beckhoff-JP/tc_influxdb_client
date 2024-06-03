@@ -3,8 +3,8 @@
   <POU Name="SampleProgram" Id="{54c36bd4-1835-4b4c-be1e-05e28c01780d}" SpecialFunc="None">
     <Declaration><![CDATA[(*
 
-Record performance data to influxDB
---------------------------------------------------
+Record performance data to influxDB and ANY SQL database
+--------------------------------------------------------
 
 
 * Objects
@@ -25,7 +25,8 @@ History
 	:header: Rev., Date,Description
 	
 	0, 2023-01-10,Initial edition
-	1. 2023-02-27,Add reStructuredText
+	1, 2023-02-27,Add reStructuredText
+	2, 2024-06-01,Add SQL database support
 	  
 *)
 
@@ -33,7 +34,6 @@ PROGRAM SampleProgram
 
 VAR CONSTANT
 	RECORD_DATA_MAX_INDEX: UDINT := 49999;
-	TARGET_DBID: UDINT := 1;
 END_VAR
 
 VAR
