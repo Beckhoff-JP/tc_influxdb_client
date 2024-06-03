@@ -55,7 +55,7 @@ END_VAR
         <ST><![CDATA[_recorder := recorder;
 _buffer_pointer := buffer_pointer;
 _buffer_byte_size := buffer_size;
-_buffer_array_size := buffer_array_size;
+_buffer_array_size := buffer_array_size - 1;
 _structure_size := _buffer_byte_size / _buffer_array_size;]]></ST>
       </Implementation>
     </Method>
@@ -253,7 +253,7 @@ IF _next_index <= _current_index OR _current_index >= _buffer_array_size THEN
 		work_data_body.accumulated_amount REF= accumulated_amount;
 		work_data_body.structure_size := _structure_size;
 		work_data_body.structure_name := _structure_name;
-		work_data_body.sql_parameters := _sql_parameters;
+		work_data_body.sql_parameters REF= _sql_parameters;
 		// queue in
 		_recorder.queue.put(work_data_body);
 		start_index := _current_index + 1;
@@ -347,13 +347,7 @@ write := TRUE;]]></ST>
       <LineId Id="519" Count="0" />
       <LineId Id="522" Count="0" />
       <LineId Id="517" Count="1" />
-      <LineId Id="461" Count="3" />
-      <LineId Id="467" Count="0" />
-      <LineId Id="574" Count="0" />
-      <LineId Id="576" Count="0" />
-      <LineId Id="556" Count="0" />
-      <LineId Id="468" Count="2" />
-      <LineId Id="537" Count="0" />
+      <LineId Id="608" Count="11" />
       <LineId Id="472" Count="4" />
       <LineId Id="514" Count="0" />
       <LineId Id="477" Count="4" />

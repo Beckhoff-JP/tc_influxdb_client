@@ -10,7 +10,7 @@ STRUCT
 	start_pointer : PVOID;
 	structure_size : UDINT;
 	structure_name : T_MaxString;
-	sql_parameters: InterfaceSQLParameters;
+	sql_parameters: REFERENCE TO sql_parameters;
 END_STRUCT
 END_TYPE
 ]]></Declaration>

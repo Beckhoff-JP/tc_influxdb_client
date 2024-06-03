@@ -12,7 +12,10 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <tcdbsrvdbCompile Include="TcDbServer\DB\DB.tcdbsrvdb">
+    <tcdbsrvdbCompile Include="TcDbServer\PostgreSQL\PostgreSQL.tcdbsrvdb">
+      <DependentUpon>TcDbServer.tcdbsrv</DependentUpon>
+    </tcdbsrvdbCompile>
+    <tcdbsrvdbCompile Include="TcDbServer\InfluxDB\InfluxDB.tcdbsrvdb">
       <DependentUpon>TcDbServer.tcdbsrv</DependentUpon>
     </tcdbsrvdbCompile>
   </ItemGroup>

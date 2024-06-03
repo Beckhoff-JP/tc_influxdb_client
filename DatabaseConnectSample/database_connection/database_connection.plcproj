@@ -90,6 +90,9 @@ Requirements:
     <Compile Include="DUTs\DatabaseThroughput.TcDUT">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="DUTs\DatabaseThroughput_SQL.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="DUTs\DataTag.TcDUT">
       <SubType>Code</SubType>
     </Compile>
@@ -134,13 +137,13 @@ Requirements:
     <Compile Include="POUs\library\InfluxDB\RecordInfluxDB.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\library\interface\InterfaceSQLParameters.TcIO">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="POUs\library\interface\IRecordDataQueue.TcIO">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\library\interface\IRecordDB.TcIO">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\library\SQL\FB_DatetimeUtilities.TcPOU">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\library\SQL\sql_parameters.TcPOU">

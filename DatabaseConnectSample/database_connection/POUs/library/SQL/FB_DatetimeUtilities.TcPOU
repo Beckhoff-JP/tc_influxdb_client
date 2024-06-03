@@ -1,0 +1,96 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_DatetimeUtilities" Id="{c57cd463-50cc-4904-9141-2c4b713fa652}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_DatetimeUtilities
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	sPrintf : FB_FormatString;
+	fbTZInfo : FB_GetTimeZoneInformation;
+	check_interval : TON;
+	check_event :BOOL := TRUE;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[check_interval(IN := NOT check_interval.Q, PT := T#15M);
+
+IF check_interval.Q THEN
+	check_event := TRUE;
+END_IF
+
+fbTZInfo(bExecute := check_event);
+
+IF check_event AND NOT fbTZInfo.bBusy THEN
+	check_event := FALSE;
+END_IF]]></ST>
+    </Implementation>
+    <Method Name="Filetime_To_Timestamp" Id="{b497eb96-c2c5-4453-99dc-ab7b9d9afdee}">
+      <Declaration><![CDATA[METHOD Filetime_To_Timestamp : T_MaxString
+VAR_INPUT
+	datetime : T_filetime64;
+END_VAR
+VAR
+	dc_time : DCTIMESTRUCT;
+	bias : DINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+dc_time := DCTIME64_TO_DCTIMESTRUCT(FILETIME64_TO_DCTIME64(datetime));
+bias := fbTZInfo.tzInfo.bias / 60;
+
+sPrintf(sFormat := '%.4d-%.2d-%.2d %.2d:%.2d:%.2d.%.3d%.3d%.2d',
+        arg1 := F_WORD(dc_time.wYear),
+        arg2 := F_WORD(dc_time.wMonth),
+        arg3 := F_WORD(dc_time.wDay),
+        arg4 := F_WORD(dc_time.wHour),
+        arg5 := F_WORD(dc_time.wMinute),
+        arg6 := F_WORD(dc_time.wSecond),
+        arg7 := F_WORD(dc_time.wMilliseconds),
+		arg8 := F_WORD(dc_time.wMicroseconds),
+		arg9 := F_DINT(bias)
+);
+
+Filetime_To_Timestamp := sPrintf.sOut;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Filetime_To_UnixT" Id="{8c317237-1408-4fb5-9de7-b86b5d7dff27}">
+      <Declaration><![CDATA[METHOD Filetime_To_UnixT : ULINT
+VAR_INPUT
+	datetime : T_filetime64;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[Filetime_To_UnixT := (datetime - 116444736000000000) / 10;]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_DatetimeUtilities">
+      <LineId Id="13" Count="0" />
+      <LineId Id="21" Count="3" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="20" Count="0" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="25" Count="1" />
+    </LineIds>
+    <LineIds Name="FB_DatetimeUtilities.Filetime_To_Timestamp">
+      <LineId Id="7" Count="0" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="27" Count="0" />
+      <LineId Id="14" Count="6" />
+      <LineId Id="12" Count="0" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="25" Count="0" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="24" Count="0" />
+      <LineId Id="23" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_DatetimeUtilities.Filetime_To_UnixT">
+      <LineId Id="10" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

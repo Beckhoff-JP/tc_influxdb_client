@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<Database>
+  <ID>2</ID>
+  <Name>PostgreSQL</Name>
+  <ServerName>localhost</ServerName>
+  <DatabaseName>tf6420test</DatabaseName>
+  <TableName />
+  <Authentication>True</Authentication>
+  <UserID>postgres</UserID>
+  <Password>2rqvXunP/YaDvLWi15AVWQ==</Password>
+  <Driver />
+  <Provider />
+  <Port>5432</Port>
+  <Protocol />
+  <Scheme />
+  <Sequence />
+  <SystemDB />
+  <FireBird_ClientDLLPath />
+  <OLDASCIIFormat>False</OLDASCIIFormat>
+  <ASCIISeparator />
+  <DBValueType>NONE</DBValueType>
+  <DBType>NpgSql_Postgres</DBType>
+  <OdbcSubType>Unknown</OdbcSubType>
+  <DriverType>Unknown</DriverType>
+  <Temporary>False</Temporary>
+  <Disabled>False</Disabled>
+  <Description />
+  <FailOverDBID>0</FailOverDBID>
+  <AdditionalParameter />
+  <AuthenticationMechanism>UserNamePassword</AuthenticationMechanism>
+  <SslCa />
+  <SslCertificateFilePath />
+  <SslCertificatePassword />
+  <Token />
+  <ConnectionStringType />
+</Database>

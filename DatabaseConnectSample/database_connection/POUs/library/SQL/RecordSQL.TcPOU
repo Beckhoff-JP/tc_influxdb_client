@@ -7,10 +7,6 @@
 *)
 
 FUNCTION_BLOCK RecordSQL IMPLEMENTS IRecordDB
-VAR_INPUT
-	nDBID						: UDINT;					// Database ID for TF6420
-	DB_Parameter				: Tc2_Utilities.T_Arg;
-END_VAR
 VAR_OUTPUT
 	bBusy			: BOOL;	// In writing database
 	bError			: BOOL; // Somthing wrong situation happend
@@ -35,6 +31,8 @@ VAR
 	_dbid				: UDINT;
 	_queue 				: dequeue;	
 	_query				: T_MaxString;
+	pParam: PVOID;
+	cbParam: UDINT;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -57,14 +55,17 @@ CASE State OF
 		END_IF
 
 	E_DbLogState.writing:
+		pParam := get_data.sql_parameters.pParameters;
+		cbParam := get_data.sql_parameters.cbParameters;
+		
 		//Write buffer element to database
-		IF fbPLCDBCmd.Execute(nDBID, 
+		IF fbPLCDBCmd.Execute(_dbid, 
 							ADR(_query), 
 							SIZEOF(_query), 
 							get_data.start_pointer, 
 							get_data.structure_size * get_data.chunk_size, 
-							get_data.sql_parameters.pParameters, 
-							get_data.sql_parameters.cbParameters) THEN
+							pParam, 
+							cbParam) THEN
 			IF fbPLCDBCmd.bError THEN
 				State := E_DbLogState.error;
 			ELSE
@@ -128,6 +129,8 @@ END_VAR
       <LineId Id="3469" Count="0" />
       <LineId Id="3249" Count="0" />
       <LineId Id="2320" Count="2" />
+      <LineId Id="3505" Count="1" />
+      <LineId Id="3508" Count="0" />
       <LineId Id="2889" Count="0" />
       <LineId Id="2891" Count="0" />
       <LineId Id="3035" Count="5" />

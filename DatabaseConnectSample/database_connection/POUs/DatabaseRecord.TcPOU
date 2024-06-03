@@ -9,11 +9,13 @@ END_VAR
     <Implementation>
       <ST><![CDATA[// Database Writing actions
 GVL.fbInfluxDBRecorder();
+GVL.fbSQLRecorder();
 ]]></ST>
     </Implementation>
     <LineIds Name="DatabaseRecord">
       <LineId Id="9" Count="0" />
       <LineId Id="7" Count="0" />
+      <LineId Id="15" Count="0" />
       <LineId Id="5" Count="0" />
     </LineIds>
   </POU>

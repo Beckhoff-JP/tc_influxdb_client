@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <Database>
   <ID>1</ID>
-  <Name>DB</Name>
+  <Name>InfluxDB</Name>
   <ServerName>http://localhost:8086</ServerName>
   <DatabaseName>machine_monitoring</DatabaseName>
   <TableName />

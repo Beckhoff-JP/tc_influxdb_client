@@ -18,7 +18,7 @@
 		<System>
 			<Settings MaxCpus="4" NonWinCpus="2" RouterMemory="67108864">
 				<Cpu CpuId="1" RtLimit="30"/>
-				<Cpu CpuId="2" BaseTime="2500"/>
+				<Cpu CpuId="2"/>
 				<IoIdleTask Affinity="#x00000004"/>
 			</Settings>
 			<Licenses>
@@ -44,7 +44,7 @@
 				</Target>
 			</Licenses>
 			<Tasks>
-				<Task Id="3" Priority="20" CycleTime="2500" AmsPort="350" Affinity="#x00000004" AdtTasks="true">
+				<Task Id="3" Priority="20" CycleTime="10000" AmsPort="350" Affinity="#x00000004" AdtTasks="true">
 					<Name>PlcTask</Name>
 				</Task>
 				<Task Id="4" Priority="1" CycleTime="100000" AmsPort="351" AdtTasks="true">
@@ -54,7 +54,7 @@
 		</System>
 		<Plc>
 			<Project GUID="{8299BEB1-A589-4E10-8266-1D808687532A}" Name="database_connection" PrjFilePath="database_connection\database_connection.plcproj" TmcFilePath="database_connection\database_connection.tmc" ReloadTmc="true" AmsPort="851" FileArchiveSettings="#x000e" SymbolicMapping="true">
-				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="1" TmcPath="database_connection\database_connection.tmc" TmcHash="{575905AC-FF8A-880A-72AA-94F5F9E6CC60}">
+				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="1" TmcPath="database_connection\database_connection.tmc" TmcHash="{8AB4C3B5-0432-E765-4AF3-D314F3A330FB}">
 					<Name>database_connection Instance</Name>
 					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
 					<Contexts>
@@ -74,7 +74,7 @@
 								<OTCID>#x02010030</OTCID>
 							</ManualConfig>
 							<Priority>20</Priority>
-							<CycleTime>250000</CycleTime>
+							<CycleTime>1000000</CycleTime>
 						</Context>
 					</Contexts>
 					<TaskPouOids>

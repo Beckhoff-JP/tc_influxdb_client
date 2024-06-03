@@ -5,6 +5,7 @@
 VAR_GLOBAL
 	// Database record driver
 	fbInfluxDBRecorder	:RecordInfluxDB(DBID := 1);
+	fbSQLRecorder 		:RecordSQL(DBID := 2);
 END_VAR]]></Declaration>
   </GVL>
 </TcPlcObject>
