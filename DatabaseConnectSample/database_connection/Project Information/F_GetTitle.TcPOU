@@ -10,11 +10,11 @@ VAR_INPUT
 	
 END_VAR]]></Declaration>
     <Implementation>
-      <ST><![CDATA[F_GetTitle := "influxdb-client";
+      <ST><![CDATA[F_GetTitle := "cyclic_database_recorder";
 ]]></ST>
     </Implementation>
     <LineIds Name="F_GetTitle">
-      <LineId Id="80" Count="0" />
+      <LineId Id="103" Count="0" />
       <LineId Id="2" Count="0" />
     </LineIds>
   </POU>

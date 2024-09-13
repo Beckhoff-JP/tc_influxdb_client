@@ -8,7 +8,7 @@ VAR_OUTPUT
 END_VAR
 VAR
 	_parameter : ARRAY [0..DbLibParam.MAX_COLUMN_NUM - 1] OF ST_ExpParameter;
-	_table_name : T_MaxString;
+	_table_name : STRING;
 	current_column_index : UDINT := 0;
 END_VAR
 ]]></Declaration>
@@ -119,7 +119,7 @@ END_VAR
     </Property>
     <Property Name="table_name" Id="{e38de48c-6b0f-45b6-8fa4-67575a9cf6f9}">
       <Declaration><![CDATA[{warning 'add property implementation'}
-PROPERTY table_name : Tc2_System.T_MaxString
+PROPERTY table_name : STRING
 ]]></Declaration>
       <Get Name="Get" Id="{f85e7fa5-a341-4565-982c-4e4bcc4b1ec2}">
         <Declaration><![CDATA[VAR
