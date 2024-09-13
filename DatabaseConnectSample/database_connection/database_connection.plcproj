@@ -17,7 +17,7 @@
     <LibraryReferences>{e16bc9cb-c3ed-44c4-ac0c-bcd4e8eb8e71}</LibraryReferences>
     <Company>Beckhoff K.K. - Japan</Company>
     <Released>false</Released>
-    <Title>influxdb-client</Title>
+    <Title>cyclic_database_recorder</Title>
     <ProjectVersion>1.0.1.1</ProjectVersion>
     <DefaultNamespace>tf6420</DefaultNamespace>
     <DocFormat>reStructuredText</DocFormat>
@@ -69,7 +69,7 @@
       </LibraryCategory>
     </LibraryCategories>
     <SelectedLibraryCategories>
-      <Id>{36e0796a-fe77-4402-a334-f23377a474d0}</Id>
+      <Id>{ebb42e0a-ab3e-4c49-880e-9e854060901d}</Id>
     </SelectedLibraryCategories>
     <PreserveCompiledLibComments>false</PreserveCompiledLibComments>
     <Placeholder>

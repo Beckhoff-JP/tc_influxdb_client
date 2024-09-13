@@ -46,17 +46,13 @@ VAR_INPUT
 	bInCopyCode : BOOL;  // if TRUE, the instance afterwards gets moved into the copy code (online change)
 	recorder	:IRecordDB; // IRecordDB is a interface class of database connection endpoint object.
 	buffer_pointer	: PVOID;
-	buffer_size		: UDINT;
-	buffer_array_size : UDINT;
 END_VAR
 
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[_recorder := recorder;
 _buffer_pointer := buffer_pointer;
-_buffer_byte_size := buffer_size;
-_buffer_array_size := buffer_array_size - 1;
-_structure_size := _buffer_byte_size / _buffer_array_size;]]></ST>
+]]></ST>
       </Implementation>
     </Method>
     <Property Name="index" Id="{14045ef6-f59e-4a14-bab6-425c44445155}">
@@ -143,6 +139,21 @@ END_VAR
         </Implementation>
       </Set>
     </Property>
+    <Method Name="set_buffer_info" Id="{904d50b9-c49a-423b-b56b-aa03c1a2edfe}">
+      <Declaration><![CDATA[METHOD set_buffer_info : BOOL
+VAR_INPUT
+	struct_size: UDINT;
+	buffer_size : UDINT;
+	structure_name: STRING;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_buffer_byte_size := buffer_size;
+_structure_size := struct_size;
+_buffer_array_size := buffer_size / struct_size;
+_structure_name := structure_name;]]></ST>
+      </Implementation>
+    </Method>
     <Property Name="SQL_parameters" Id="{2eaf2441-9d12-4ef2-ae85-40c278777d68}">
       <Declaration><![CDATA[{warning 'add property implementation'}
 PROPERTY SQL_parameters : REFERENCE TO sql_parameters
@@ -155,27 +166,6 @@ END_VAR
           <ST><![CDATA[SQL_parameters REF= _sql_parameters;]]></ST>
         </Implementation>
       </Get>
-    </Property>
-    <Property Name="structure_name" Id="{900b0c23-47dd-4f6e-9680-a5bd6f305cea}">
-      <Declaration><![CDATA[{warning 'add property implementation'}
-PROPERTY structure_name : Tc2_System.T_MaxString
-]]></Declaration>
-      <Get Name="Get" Id="{37b366f7-321c-4764-91de-4e4f5f423a15}">
-        <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[structure_name := _structure_name;]]></ST>
-        </Implementation>
-      </Get>
-      <Set Name="Set" Id="{2fb20688-c32a-49b3-9f21-28e8605ec7e6}">
-        <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[_structure_name := structure_name;]]></ST>
-        </Implementation>
-      </Set>
     </Property>
     <Method Name="write" Id="{4d6a4f57-2187-4032-b3a4-3e31e3263b61}">
       <Declaration><![CDATA[(*The method to write to database through data buffer with queue.*)
@@ -224,12 +214,12 @@ END_IF
 
 queue_input_flag := FALSE;
 
-IF _next_index <= _current_index OR _current_index >= _buffer_array_size THEN
+IF _next_index <= _current_index OR _current_index >= (_buffer_array_size - 1 ) THEN
 	//max_chunk_size := nDataBufferMaxIndex + 1;
 	// put_data
 	IF NOT _recorder.queue.full THEN
 		data_size := _current_index - start_index + 1;
-		_avalable_buffer_size := UDINT_TO_DINT(_buffer_array_size) - UDINT_TO_DINT(accumulated_amount) +1;
+		_avalable_buffer_size := UDINT_TO_DINT(_buffer_array_size) - UDINT_TO_DINT(accumulated_amount);
 		IF _avalable_buffer_size < UDINT_TO_DINT(data_size) AND _avalable_buffer_size > 0 THEN
 			data_size := DINT_TO_UDINT(_avalable_buffer_size);
 		ELSIF _avalable_buffer_size <= 0 THEN
@@ -265,7 +255,7 @@ END_IF
 IF last_data_count <> accumulated_amount OR queue_input_flag THEN
 	(*Re-calculate chunk size when amount of buffered data is changed including dequeued by recorder.*)
 	// calculate next index
-	_buffer_usage := UDINT_TO_REAL(accumulated_amount) / UDINT_TO_REAL(_buffer_array_size + 1);
+	_buffer_usage := UDINT_TO_REAL(accumulated_amount) / UDINT_TO_REAL(_buffer_array_size);
 	diff_target := UDINT_TO_REAL(_max_chunk_size) * _buffer_usage;
 	pid_ope := UDINT_TO_REAL(_min_chunk_size) + diff_target;
 	chunk_size := REAL_TO_UDINT(pid_ope);
@@ -280,7 +270,7 @@ END_IF
 
 last_data_count := accumulated_amount;
 
-IF _current_index < _buffer_array_size THEN
+IF _current_index < _buffer_array_size - 1 THEN
 	_current_index := _current_index + 1;
 ELSE
 	_current_index := 0;
@@ -299,7 +289,7 @@ write := TRUE;]]></ST>
     </LineIds>
     <LineIds Name="BufferedRecord.FB_init">
       <LineId Id="15" Count="0" />
-      <LineId Id="25" Count="2" />
+      <LineId Id="25" Count="0" />
       <LineId Id="30" Count="0" />
     </LineIds>
     <LineIds Name="BufferedRecord.index.Get">
@@ -327,13 +317,11 @@ write := TRUE;]]></ST>
     <LineIds Name="BufferedRecord.recorder.Set">
       <LineId Id="2" Count="0" />
     </LineIds>
+    <LineIds Name="BufferedRecord.set_buffer_info">
+      <LineId Id="6" Count="2" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
     <LineIds Name="BufferedRecord.SQL_parameters.Get">
-      <LineId Id="2" Count="0" />
-    </LineIds>
-    <LineIds Name="BufferedRecord.structure_name.Get">
-      <LineId Id="2" Count="0" />
-    </LineIds>
-    <LineIds Name="BufferedRecord.structure_name.Set">
       <LineId Id="2" Count="0" />
     </LineIds>
     <LineIds Name="BufferedRecord.write">

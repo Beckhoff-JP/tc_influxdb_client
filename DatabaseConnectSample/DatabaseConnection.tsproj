@@ -24,22 +24,22 @@
 			<Licenses>
 				<Target BkhfOrder="0110012393" CustomOrder="BAJP">
 					<ManualSelect>{5BE000FB-98CE-4B83-A754-2CB323710E14}</ManualSelect>
-					<ManualSelect>{0070B910-0995-4F44-83BF-D1E141B4D8C3}</ManualSelect>
 					<ManualSelect>{BB40055B-8333-4223-90EA-7C4559DC7C69}</ManualSelect>
-					<ManualSelect>{927A7313-A412-4376-8911-4A8F60EC8651}</ManualSelect>
+					<ManualSelect>{0070B910-0995-4F44-83BF-D1E141B4D8C3}</ManualSelect>
 					<ManualSelect>{4989A799-AEEA-4FEE-88EF-666B99EEFB45}</ManualSelect>
+					<ManualSelect>{927A7313-A412-4376-8911-4A8F60EC8651}</ManualSelect>
 					<ManualSelect>{CCA47D7F-3A22-4852-81CD-15A045A6B646}</ManualSelect>
-					<ManualSelect>{D06E108C-0E3C-48D7-A589-8961B3FC9AC0}</ManualSelect>
-					<ManualSelect>{02AC2825-C3C7-4D15-AAF6-4EB45EFAA2D0}</ManualSelect>
 					<ManualSelect>{067D1C29-F119-431C-A681-E503451951C7}</ManualSelect>
-					<ManualSelect>{92583661-35AE-45CE-BD4F-C35BFE16F07E}</ManualSelect>
+					<ManualSelect>{02AC2825-C3C7-4D15-AAF6-4EB45EFAA2D0}</ManualSelect>
+					<ManualSelect>{D06E108C-0E3C-48D7-A589-8961B3FC9AC0}</ManualSelect>
 					<ManualSelect>{796D380F-D49E-4C0C-A05F-500052FAC883}</ManualSelect>
-					<ManualSelect>{A0C635DF-5F13-43BE-8D0B-613386AD9A20}</ManualSelect>
-					<ManualSelect>{133B41A5-2827-4423-8FEB-78AF4E0C890F}</ManualSelect>
+					<ManualSelect>{92583661-35AE-45CE-BD4F-C35BFE16F07E}</ManualSelect>
 					<ManualSelect>{EE499E71-9522-4C05-86B4-8AD0F904E0C4}</ManualSelect>
+					<ManualSelect>{133B41A5-2827-4423-8FEB-78AF4E0C890F}</ManualSelect>
+					<ManualSelect>{A0C635DF-5F13-43BE-8D0B-613386AD9A20}</ManualSelect>
 					<ManualSelect>{27326EE5-AB30-4084-B15B-8CCA96CCBF0B}</ManualSelect>
-					<ManualSelect>{7371CC89-F21A-4584-994B-8B112F6EB1A0}</ManualSelect>
 					<ManualSelect>{3DDCAB25-BF0E-412C-A721-DC77C1B8099C}</ManualSelect>
+					<ManualSelect>{7371CC89-F21A-4584-994B-8B112F6EB1A0}</ManualSelect>
 					<ManualSelect>{BB7AE665-A8D6-41F6-954F-961DDDCDA42B}</ManualSelect>
 				</Target>
 			</Licenses>
@@ -54,7 +54,7 @@
 		</System>
 		<Plc>
 			<Project GUID="{8299BEB1-A589-4E10-8266-1D808687532A}" Name="database_connection" PrjFilePath="database_connection\database_connection.plcproj" TmcFilePath="database_connection\database_connection.tmc" ReloadTmc="true" AmsPort="851" FileArchiveSettings="#x000e" SymbolicMapping="true">
-				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="1" TmcPath="database_connection\database_connection.tmc" TmcHash="{6688D0F2-2363-90ED-6531-AABC183E80E9}">
+				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="1" TmcPath="database_connection\database_connection.tmc" TmcHash="{A6C8F1CC-B268-8487-F158-27D5E81DB1A0}">
 					<Name>database_connection Instance</Name>
 					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
 					<Contexts>

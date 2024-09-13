@@ -1,8 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
   <DUT Name="DatabaseThroughput" Id="{39ced11c-3b33-4086-a1c0-e6d1ba5f33fd}">
-    <Declaration><![CDATA[TYPE DatabaseThroughput EXTENDS DataTag:
+    <Declaration><![CDATA[TYPE DatabaseThroughput:
 STRUCT
+	{attribute 'TagName' := 'machine_id'}
+    machine_id : STRING(255); // 設備名
+    {attribute 'TagName' := 'data_type_id'}
+    job_id : STRING(255); // 発生イベント種別
 	{attribute 'FieldName' := 'DB_queue_count'}
     db_insert_queue_count: UDINT;
 	{attribute 'FieldName' := 'DB_buffer_current_index'}

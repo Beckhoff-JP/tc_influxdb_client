@@ -62,9 +62,7 @@ VAR
 
 	fbThroughputRecorder_influxDB		:BufferedRecord(
 												GVL.fbInfluxDBRecorder, 
-												ADR(DatabaseThroughputRecordBuffer), 
-												SIZEOF(DatabaseThroughputRecordBuffer),
-												DBLibParam.DATA_BUFFER_SIZE
+												ADR(DatabaseThroughputRecordBuffer)
 										);		// record controller
 
 	// For SQL DB
@@ -75,9 +73,7 @@ VAR
 
 	fbThroughputRecorder_SQLDB			:BufferedRecord(
 												GVL.fbSQLRecorder, 
-												ADR(DatabaseThroughputRecordBuffer_SQL), 
-												SIZEOF(DatabaseThroughputRecordBuffer_SQL),
-												DBLibParam.DATA_BUFFER_SIZE
+												ADR(DatabaseThroughputRecordBuffer_SQL)
 										);		// record controller
 
 END_VAR
@@ -86,10 +82,16 @@ END_VAR
       <ST><![CDATA[(* Initialize*)
 IF NOT initialized THEN
 	// Influx DB
-	fbThroughputRecorder_influxDB.structure_name := 'DatabaseThroughput'; // Measurement name
+	fbThroughputRecorder_influxDB.set_buffer_info(
+		struct_size := SIZEOF(DatabaseThroughputRecordBuffer[0]),
+		buffer_size := SIZEOF(DatabaseThroughputRecordBuffer),
+		structure_name := 'DatabaseThroughput'); // Measurement name
 	fbThroughputRecorder_influxDB.SQL_parameters.table_name := 'DatabaseThroughput'; // Structure type name
 	// SQL DB
-	fbThroughputRecorder_SQLDB.structure_name := 'DatabaseThroughput'; // Measurement name
+	fbThroughputRecorder_SQLDB.set_buffer_info(
+		struct_size := SIZEOF(DatabaseThroughputRecordBuffer_SQL[0]),
+		buffer_size := SIZEOF(DatabaseThroughputRecordBuffer_SQL),
+		structure_name := ''); // Measurement name
 	fbThroughputRecorder_SQLDB.SQL_parameters.table_name := 'database_throughput';
 	fbThroughputRecorder_SQLDB.SQL_parameters.add_column('datetime', E_ExpParameterType.Int64, SIZEOF(DatabaseThroughputRecordData_SQL.datetime));
 	fbThroughputRecorder_SQLDB.SQL_parameters.add_column('db_insert_queue_count', E_ExpParameterType.Int32, SIZEOF(DatabaseThroughputRecordData_SQL.db_insert_queue_count));
@@ -121,7 +123,7 @@ DatabaseThroughputRecordData.next_index := fbThroughputRecorder_influxDB.next_in
 DatabaseThroughputRecordData.buffer_usage := fbThroughputRecorder_influxDB.buffer_usage;
 
 (* Queue set *)
-//fbThroughputRecorder_influxDB.write(ADR(DatabaseThroughputRecordData));
+fbThroughputRecorder_influxDB.write(ADR(DatabaseThroughputRecordData));
 
 // cyclic record > SQLdb
 DatabaseThroughputRecordData_SQL.datetime := fbDtUtil.Filetime_To_UnixT(F_GetSystemTime());
@@ -133,7 +135,11 @@ DatabaseThroughputRecordData_SQL.buffer_usage := fbThroughputRecorder_SQLDB.buff
 fbThroughputRecorder_SQLDB.write(ADR(DatabaseThroughputRecordData_SQL));]]></ST>
     </Implementation>
     <LineIds Name="SampleProgram">
-      <LineId Id="4574" Count="6" />
+      <LineId Id="4574" Count="3" />
+      <LineId Id="4872" Count="2" />
+      <LineId Id="4578" Count="2" />
+      <LineId Id="4879" Count="1" />
+      <LineId Id="4875" Count="0" />
       <LineId Id="4612" Count="1" />
       <LineId Id="4616" Count="3" />
       <LineId Id="4583" Count="1" />

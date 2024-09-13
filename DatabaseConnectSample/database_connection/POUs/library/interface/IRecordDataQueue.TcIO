@@ -57,15 +57,6 @@ PROPERTY next_index : UDINT]]></Declaration>
         <Declaration><![CDATA[]]></Declaration>
       </Get>
     </Property>
-    <Property Name="structure_name" Id="{2c2f0cda-2900-41b3-81b0-f3bceb28a259}">
-      <Declaration><![CDATA[PROPERTY structure_name : T_MaxString]]></Declaration>
-      <Get Name="Get" Id="{496b4656-d04b-46e3-8023-ceeb157da5d0}">
-        <Declaration><![CDATA[]]></Declaration>
-      </Get>
-      <Set Name="Set" Id="{3d752c7a-1172-4fc6-8c8a-8b93edd7e040}">
-        <Declaration><![CDATA[]]></Declaration>
-      </Set>
-    </Property>
     <Method Name="write" Id="{b7310110-45a3-4bf4-930d-2690f31ed7d1}">
       <Declaration><![CDATA[METHOD write : BOOL
 VAR_INPUT
